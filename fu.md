@@ -1,7 +1,0 @@
-FU
-FU
-FU
-FU
-FU
-FU
-FU
