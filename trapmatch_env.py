@@ -1,0 +1,181 @@
+from farse_mach import *
+
+"""
+outputs a random ordering of integers in the
+range [0,i). 
+"""
+def random_ordering(i:int):
+    q = [j for j in range(i)]
+    random.shuffle(q)
+    return q
+
+"""
+environment for the trap-matching multi-player
+game
+"""
+class TMEnv:
+
+    """
+    """
+    def __init__(self,players,game_mode_1,game_mode_2,farse_mach=None,):
+        assert game_mode_1 in GAME_MODES
+        assert game_mode_2 in GAME_MODES2
+        self.players = players
+        self.game_mode_1 = game_mode_1
+        self.game_mode_2 = game_mode_2
+        self.fm = farse_mach
+        return
+
+    """
+    dumb generation assigns no PContextMapper to any player.
+    """
+    @staticmethod
+    def generate__type_dumb(i:int,num_players,num_moves_range,\
+        drange,connectivity_range,excess_range,game_modes,farse_mach):
+        # TODO: refactor
+        assert type(i) in {type(None),int}
+        if type(i) == int:
+            random.seed(i)
+        
+        players = []
+        for j in range(num_players):
+            nm = random.randint(num_moves_range[0],num_moves_range[1])
+            rg_args = []
+            rg_args.append(random.randint(drange[0],drange[1]))
+            rg_args.append(deepcopy(connectivity_range))
+            rg_args.append(deepcopy(DEFAULT_NODE_HEALTH_RANGE))
+            excess = random.randint(excess_range[0],excess_range[1])
+            p = Player.generate(i,str(j),nm,rg_args,excess,None)
+            players.append(p)
+        return TMEnv(players,game_modes[0],game_modes[1],farse_mach) 
+
+    """
+    moves one timestamp by a random ordering of the Players
+    in the game. 
+    """
+    def move_one_timestamp(self):
+        ordering = random_ordering(len(self.players))
+        
+        for i in ordering:
+            self.move_one_player(i) 
+        return -1
+
+    """
+    """
+    def move_one_player(self,p_index:int):
+        self.feed_moving_player_info(p_index)
+        
+        # player decision is in 
+        #self.players[p_index].move_one() 
+        return -1
+
+    """
+    iterates through and feed the player info.
+    for its move
+    """
+    def feed_moving_player_info(self,p_index:int):
+        # calculate PMove info
+        self.all_pmove_AND_player_combos(p_index)
+
+        # calculate AMove info
+        other_players = [p for (i,p) in enumerate(self.players)]
+        self.players[p_index].one_gauge_AMove(other_players)
+
+        # calculate MMove info
+        self.players[p_index].one_gauge_MMove()
+
+        return
+
+    def all_pmove_AND_player_combos(self,p_index:int):
+        p = self.players[p_index]
+
+        # each move
+        for i in range(len(p.ms)):
+            for x in self.players:
+                p.one_gauge_PMove(x,i)
+        return
+
+    # TODO: untested
+    """
+    Used to find the greatest common subgraph
+    shared amongst the graphs. 
+    """
+    def gcs_exec(self,search_type = "full neighbor fit- type 2"):
+
+        # convert each of the players' RG to their MG's.
+        mgs = []
+        for x in self.players:
+            mg = MicroGraph.from_ResourceGraph(x.rg)
+            mgs.append(mg)
+
+        # obtain the solution for greatest
+        # common subgraph
+        gcsc = GCSContainer(deepcopy(mgs),search_type)
+        gcsc.initialize_cache() 
+        s1,s2 = gcsc.search()
+
+        # insert a blank at the index of the reference
+        s1[0].insert(gcsc.reference_index,None)
+
+        # convert the solution to the reference micrograph
+        mg = GCSContainer.solution_to_MG(s1)
+
+        x1 = None
+        if self.game_mode_2 == "public":
+            x1 = defaultdict(float)
+
+            # iterate through the search solution and
+            # calculate the equivalent subgraph based
+            # on mg, then determine the cumulative
+            # health of each of those cumulative equivalents
+            for (i,x) in enumerate(s1[0]):
+                mg2 = deepcopy(mg)
+
+                # case: not the reference
+                if type(x) != type(None):
+                    mg2 = MicroGraph.isotransform_MG(mg2,x)                
+                h = self.players[i].rg.cumulative_ne_health_by_mg(mg2)
+                x1[self.players[i].idn] = h
+
+        # assign the result to each of the players
+        for (i,p) in enumerate(self.players):
+            p.assign_GCS(deepcopy(mg),deepcopy(x1),s1[0][i])
+        return 
+
+    #####################################
+
+    # TODO: test
+    def exec_PMove(self,player_index,pmove_index):
+        # register the PMove onto self
+        rg = self.players[player_index].rg
+        pmove = self.players[player_index].ps[pmove_index]
+        edn,ede,at,nr = self.players[player_index].pdec.payoff_info_(\
+            rg,pmove,True)
+        dn,de = self.players[player_index].pdec.bm_negochips_transform(\
+            pmove_index,edn,ede,rg)
+        self.players[player_index].register_PMove(pmove_index,edn,ede,dn,de)
+
+        # register the PMove onto all other active players
+        record_mgx = True if pmove_index in {2,3} else False
+        idn = self.players[player_index].idn
+        for i in range(len(self.players)):
+            if i == player_index: continue
+            neap,eeap,pmgx = self.players[i].register_PMove_hit(idn,pmove,\
+                record_mgx)
+            self.players[player_index].register_PMove_anti(\
+                pmove_index,p_idn,neap,eeap)
+
+            # update the PKDB if pmove_index in {2,3}
+            if record_mgx:
+                self.players[player_index].update_PKDB(pmgx)
+
+        # conduct the post-analysis of the PMove to hypothesize on
+        # negochip locations 
+        self.players[player_index].post_analysis_PMove__negochip_deduction(pmove_index)
+
+        # update the hit survival rate for the player
+        self.players[player_index].postmove_update()
+        return
+
+    def remove_deceased_player(self):
+        return -1 
