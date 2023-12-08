@@ -7,5 +7,7 @@ python3 -m unittest discover tests
 https://stackoverflow.com/questions/1732438/how-do-i-run-all-python-unit-tests-in-a-directory
 
 # Plans
-Proprietary software, program is conceptual, to be 
-released by New Year's Eve. 
+Rough draft by New Year's Eve.
+
+# License?
+Copyright 2023 Richard Pham.
