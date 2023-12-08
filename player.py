@@ -128,8 +128,8 @@ class PContext:
 
         self.mmove_prediction = defaultdict(float)
 
-        # iterable<(player of interest,NInfo)> 
-        self.nmove_prediction = None
+        # iterable<NInfo> 
+        self.nmove_prediction = []
 
         # the decision that Player made
         self.selection = None
@@ -697,13 +697,58 @@ class PDEC:
     """
     gauges a single player for NMove gains. 
     """
-    def gauge_nmove_payoff(self,player,max_chip_number):        
-        return -1
+    def gauge_nmove_payoff(self,player,max_chip_number):
+        ninego = self.gauge_nmove_negochip(player,max_chip_number)
+        ninega = self.gauge_nmove_negachip(player,max_chip_number)    
+        self.pcontext.pmove_prediction.extend([ninego,ninega])
+        return
 
+    # TODO: test
     def gauge_nmove_negochip(self,player,max_chip_number):
         ##return -1 
-        q1 = self.negachip_candidates(player)
+        q1,q2 = self.negochip_candidates(player)
 
+        # gauge distort
+        data = []
+        for n in q1:
+            x = self.gauge_negochip_improvement(player.idn,n,"distort")
+            data.append((x,n,"distort"))
+
+        # gauge deception
+        if type(q2) != type(None):
+            for n in q2:
+                x = self.gauge_negochip_improvement(player.idn,n,"deception")
+                data.append((x,n,"deception"))
+        
+        nhsr = sorted(data,key=lambda x: abs(x[0]),reverse=True)
+        q = nhsr[:max_chip_number]
+        nx1 = NInfo(True,player.idn,q)
+        
+    """
+    gauge of <NegoChip> depends on `neg_type`:
+    * `neg_type` = deception:
+        uses DefInt.node_delta
+    * `edge_type` = distort:
+        uses DefInt.pmove_playernode_recep (other)
+             OR DefInt.ea_self_target_node (self)
+
+        if self: measures the delta of expected gains
+        if other: measures the delta of expected losses 
+    """
+    def gauge_negochip_improvement(self,p_idn,n,neg_type):
+        assert neg_type in NEGO_TYPES
+
+        # program check
+        if p_idn != self.pidn:
+            assert neg_type != "deception"
+
+        p_idn = None if p_idn == self.pidn else p_idn
+        # case: deception
+        if neg_type == "deception":
+            return self.def_int.cumulative_nOrE_delta(n,True)
+        # case: distort
+        expected,actual = self.def_int.cumulative_expected_actual_of_move_by_node_info(p_idn,n)
+        return (actual * DEFAULT_NEGOCHIP_MULTIPLIER) - actual
 
     # NOTE: gauge does not use precise mechanisms to produce
     #       numerical results
@@ -741,7 +786,6 @@ class PDEC:
             nl1 = self.available_nodes_by_info(self.idn,"distort",sn)
         return nl1,nl2
 
-
     def gauge_nmove_negachip(self,player,max_chip_number):
         # get the negachip candidates
         q1 = self.negachip_candidates(player)
@@ -753,23 +797,10 @@ class PDEC:
             f = self.gauge_negachip_improvement(player.idn,k,v)
             expected_improvements.append((f,k,v)) 
 
-        ###### 
-        """
-        for q_ in q1[0]:
-            f = self.gauge_negachip_improvement(player.idn,q_,"distort")
-            expected_improvements.append((f,q_,"distort"))
-
-        if type(q1[1]) != type(None):
-            for q_ in q1[0]:
-                f = self.gauge_negachip_improvement(player.idn,q_,"deception")
-                expected_improvements.append((f,q_,"deception"))
-        """
-
-
             # rank the samples
-        nhsr = sorted(expected_improvements,key=lambda x: x[0],reverse=True)
+        nhsr = sorted(expected_improvements,key=lambda x: abs(x[0]),reverse=True)
         q = nhsr[:max_chip_number]
-        nx1 = NInfo(True,player.idn,q)
+        nx1 = NInfo(False,player.idn,q)
 
     """
     fetches the cumulative (expected,actual) delta pair for the 
@@ -789,13 +820,15 @@ class PDEC:
         if self.pidn == p_idn:
             p_idn = None
 
-
         e,a = self.def_int.cumulative_expected_actual_of_move_by_node_info(\
             p_idn,n)
 
         if neg_type == "distort":
             return e - (e / DEFAULT_NEGOCHIP_MULTIPLIER)
         return e - a
+
+    def gauge_negochip_improvement(self,p_idn,n,neg_type):
+
 
     def negachip_candidates(self,player):
         candidates = deepcopy(self.pdec.suspected_negochips[player.idn])

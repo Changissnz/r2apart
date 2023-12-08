@@ -107,14 +107,17 @@ def classify_node_by_ea_pair(self,ea_pair,is_self):
         return "noneg"
 
     if is_self:
-        return "nego-distort"
+        return "distort"
+    
+    if ea_pair[0] == 0:
+        return "deception"
 
     q = ea_pair[0] % ea_pair[1]
     stat = q < 0.1
 
     if stat: 
-        return "nego-distort"
-    return "nego-deception"
+        return "distort"
+    return "deception"
 
 
 ####################################################################
@@ -312,7 +315,6 @@ class NegoContainer:
                     break
         return active 
 
-    
     """
     return:
     - sequence of active chips by `nego_type` for player 

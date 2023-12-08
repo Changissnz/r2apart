@@ -488,7 +488,7 @@ class NInfo:
         self.chipinfo_seq = chipinfo_seq
         return 
 
-        
+
 
 #######################################################################################
 
@@ -602,9 +602,19 @@ class DefInt:
         self.ea_self_target_edge = defaultdict(defaultdict)
         return
 
+    def cumulative_nOrE_delta__most_recent(self,x,is_node):
+        q = self.node_delta if is_node else self.edge_delta
+
+        if x not in q: return 0.
+        dx = q[x]
+        c = 0.
+        for (k,v) in dx.items():
+            c += v[-1]
+        return c 
+
     """
     """
-    def cumulative_expected_actual_of_move_by_node_info(p_idn,node_idn):
+    def cumulative_expected_actual_of_move_by_node_info(self,p_idn,node_idn):
         # case: self
         expected,actual = 0.,0.
         if type(p_idn) == type(None):
