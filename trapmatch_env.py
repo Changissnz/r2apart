@@ -89,10 +89,20 @@ class TMEnv:
     def all_pmove_AND_player_combos(self,p_index:int):
         p = self.players[p_index]
 
-        # each move
-        for i in range(len(p.ms)):
-            for x in self.players:
-                p.one_gauge_PMove(x,i)
+        # rank the priority of PMoves
+        priorities = p.pmove_priorities()
+        pseq = [(k,v) for (k,v) in priorities.items()]
+        pseq = sorted(pseq,key=lambda x:x[1])
+        pseq = pseq[:DEFAULT_PMOVE_MAX_GAUGES]
+        
+        # iterate through the highest ranking PMoves and
+        # gauge them
+        for x in pseq:
+            # get the move index of x[0]
+            mi = p.pmove_idn_to_index(x[0])
+            assert mi != -1
+            for px in self.players:
+                p.one_gauge_PMove(px,mi)
         return
 
     # TODO: untested

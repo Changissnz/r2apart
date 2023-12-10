@@ -918,6 +918,15 @@ class Player:
         for x in self.ms:
             print(str(x)) 
 
+    def pmove_idn_to_index(self,idn):
+        index = -1
+        for (i,x) in enumerate(self.ms):
+            if x.idn == idn:
+                return i
+        return index
+
+
+
     ########################## methods for decep/distort
     # NOTE: 
     """
