@@ -151,9 +151,8 @@ class NegoChip:
         self.lifespan -= 1
         return self.lifespan > 0 
 
-# TODO: make an __eq__ here to compare with NegoChip 
 """
-chip used to
+chip used to negate a NegoChip
 """
 class NegaChip:
 

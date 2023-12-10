@@ -276,12 +276,11 @@ class PDEC:
         self.other_RG = defaultdict(None)
         self.pidn = pidn
 
-        # player p -> suspected negochips (distort|decep) 
-        self.suspected_negochips = defaultdict(list)
+        # player p -> node -> suspected type of negochip
+        self.suspected_negochips = defaultdict(defaultdict)
 
         # container that holds the active negochips for player
         self.nc = NegoContainer()
-
 
         # used for defensive intelligence
         self.def_int = def_int
@@ -343,17 +342,13 @@ class PDEC:
         print(nr)
         print()
         """
-        ###
-            
+        ###            
         self.pcontext.summarize_PMove(pmove,actor,dn,de,si,nr,is_target)
         return 
 
     """
-    dn := dict, node -> delta
-    de := dict, node -> delta
-    at := [0] additional nodes to satisfy another iso.
-
-    nr := 
+    pidn := str, player identifier
+    pmove := PMove
     """
     def payoff_info_for_player(self,pidn,pmove:PMove):
         assert type(pidn) in {str,Player} 
@@ -382,15 +377,7 @@ class PDEC:
         # get the initial payoff info
         dn,de,at,nr = self.payoff_info_(rg,pmove,is_target)
 
-        # bm-transform the payoff info
-        #-#-#-#-#-
-        """
-        if not is_target:
-            rg = None
-        else:
-            pidn = None
-        """
-        #-#-#-#-#-
+        # distort-transform the payoff info
         dn,de = self.predictive_negochips_distorttransform(pidn,dn,de)#,rg)
         return dn,de,at,nr
 
@@ -409,29 +396,24 @@ class PDEC:
     based on the knowledge available to the owner with regards to its
     <NegoContainer>.
     """
-    def predictive_negochips_distorttransform(self,pidn,dn,de):##,target_rg):
+    def predictive_negochips_distorttransform(self,pidn,dn,de):
         ##assert type(target_rg) in {ResourceGraph,type(None)}
 
         # convert the vector of distorted negochips to a map
         # node -> payoff
         mbm = defaultdict(float)
-
             # case: not self
-        ##if type(target_rg) == type(None):
         if self.pidn != pidn:
             q = self.suspected_negochips[pidn]
-            qbm = [deepcopy(q_) for q_ in q if q_.nego_type == "distort"] 
-            for q_ in qbm:
-                mbm[q_.loc] = 1 / q_.magnitude if q_.magnitude != 0. else 0.
-            # case: 
+            print("Q")
+            # player does not exact magnitude of negochip, assumes
+            # DEFAULT_NEGOCHIP_MULTIPLIER 
+            q2 = set()
+            for (k,v) in q.items():
+                if v == "distort":
+                    mbm[k] = 1.0 / DEFAULT_NEGOCHIP_MULTIPLIER
+            # case: self 
         else:
-            #-#-#-#
-            """
-            qbm = [deepcopy(q_) for q_ in target_rg.neg_chips if q_.nego_type \
-                == "distort" and q_.owner == pidn] 
-            """
-            #-#-#-#
-
             qbm = self.nc.active_chips_by_info(pidn,"distort")
             for q_ in qbm:
                 mbm[q_.loc] = q_.magnitude
@@ -827,9 +809,6 @@ class PDEC:
             return e - (e / DEFAULT_NEGOCHIP_MULTIPLIER)
         return e - a
 
-    def gauge_negochip_improvement(self,p_idn,n,neg_type):
-
-
     def negachip_candidates(self,player):
         candidates = deepcopy(self.pdec.suspected_negochips[player.idn])
         return candidates
@@ -873,8 +852,10 @@ class Player:
             self.pcontext_mapper = PContextMapper(StdDecFunction())
         else:
             self.pcontext_mapper = pcontext_mapper
-
+        # player decision struct, used to store relevant information to make
+        # decisions
         self.pdec = PDEC(idn,pcontext_mapper)
+        # player move log
         self.pml = PMLog(pml_type)
 
     ########################## instantiation and display methods
@@ -971,11 +952,12 @@ class Player:
         mpd = defaultdict(None,x)
         self.pdec.gauge_mmove_payoff(mnh,meh,mpd) 
 
-    def one_gauge_NMove(self):
+    def one_gauge_NMove(self,other_players):
+        l = int(round(len(self.rg.node_health_map) / 3))
 
-
-
-        return -1
+        for p in other_players:
+            self.gauge_nmove_payoff(p,l)
+        return
     
     ######### register XMoves
     #######################################################
@@ -1159,7 +1141,6 @@ class Player:
 
     #############################################################
 
-
     def assign_GCS(self,mg:MicroGraph,player_health_impact,isomap):
         assert type(mg) == MicroGraph
         assert type(player_health_impact) in {type(None),defaultdict}
@@ -1181,16 +1162,86 @@ class Player:
     """
     ranks the PMove by priorities using the following
     variables:
+
+    (1) V+E scores of move's target and antitarget graphs;
+        (V+E scores correspond to isomorphic attack coverage).
+
+    (2) Cumulative difference of expected and actual
     *DefInt*
     - pmove_playernode_recep
     - pmove_playeredge_recep
     - ea_self_target_node
     - ea_self_target_edge
-    **
+    
+    (3) Most recent occurrence of PMove (according to <PMLog>)
+
+    For all three of the above variables, lower scores correspond to
+    higher ranks.
     """
     def pmove_priorities(self):
-        return -1
+        # fetch the values
+        mpself,mpothers = self.ve_dualscores_of_moves()
+        eaself,eaothers = self.diff_ea_of_moves()
+        mro = self.most_recent_move_occurrences()
 
+        # rank the values for
+        rx1 = rank_stddict_floatvalues(mpself)
+        rx2 = rank_stddict_floatvalues(mpothers)
+        rx3 = rank_stddict_floatvalues(eaself)
+        rx4 = rank_stddict_floatvalues(eaothers)
+        rx5 = rank_stddict_floatvalues(mro)
+        q = merge_dictionaries__additive([rx1,rx2,rx3,\
+            rx4,rx5])
+        rx = rank_stddict_floatvalues(q)
+        return rx
+
+    """
+    """
+    def ve_dualscores_of_moves(self):
+        map_self,map_others = defaultdict(float),defaultdict(float)
+
+        for m in self.ms:
+            mg1 = MicroGraph.from_ResourceGraph(m.payoff_target)
+            mg2 = MicroGraph.from_ResourceGraph(m.antipayoff_target)
+
+            ns1,es1 = mg1.ve_score()
+            ns2,es2 = mg2.ve_score()
+
+            map_self[m.pm_idn] = (ns1,es1)
+            map_others[m.pm_idn] = (ns2,es2)
+        return map_self,map_others
+
+    """
+    return:
+    - self difference of cumulative expected/actual from PMoves,
+      others difference of cumulative expected/actual from PMoves.
+    """
+    def diff_ea_of_moves(self):
+        # get all the PMove idns.
+        pm_idns = [m.pm_idn for m in self.ms]
+
+        # self
+        eadiff_self = defaultdict(float)
+        for pm in pm_idns:
+            exp,act = self.pdec.def_int.cumulative_expected_actual_of_move(pm,True)
+            eadiff_self[pm] = exp - act
+
+        # others
+        eadiff_others = defaultdict(float)
+        for pm in pm_idns:
+            exp,act = self.pdec.def_int.cumulative_expected_actual_of_move(pm,True)
+            eadiff_others[pm] = exp - act
+        return (eadiff_self,eadiff_others)
+
+    def most_recent_move_occurrences(self):
+        # iterate through each of the PMoves and check
+        # for their most recent execution
+        most_recent_move_indices = {}
+        for x in self.ms:
+            gmd = GenericMoveDesc.from_XInfo(x)
+            i = self.pml.most_recent_artifact(gmd)
+            most_recent_move_indices[x.pm_idn] = i
+        return most_recent_move_indices
 
     def choose(self):
         # dummy choice is PMove

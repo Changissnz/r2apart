@@ -50,6 +50,38 @@ def std_linear_combination(wx,sample):
     q += wx[ls]
     return q
 
+# TODO: test 
+"""
+rank values are in the range [1,len(d)]. Tied
+samples have the same rank.
+
+return:
+- dict, key of d -> rank of key 
+"""
+def rank_stddict_floatvalues(d,reverse=False):
+    assert type(d) in {dict,defaultdict}
+
+    # convert d to a list
+    dx = [(k,v) for (k,v) in d.items()]
+    # sort it by the second index
+    dx = sorted(dx,key=lambda x:x[1],reverse=reverse)
+    if len(dx) == 0:
+        return {}
+
+    # iterate through and assign each one a
+    # ranking number,
+    dranks = defaultdict(float)
+    r = 1
+    x = dx[0][1]
+    dranks[dx[0][0]] = r
+
+    for q in dx[1:]:
+        if abs(x - q[1]) > 10 ** -5:
+            r += 1 
+            x = q[1]
+        dranks[q[0]] = r
+    return dranks
+
 ## functions used to condense the delta values of a PMove on a 
 ## particular Player
 ################################################################
@@ -107,12 +139,6 @@ class PMove:
         self.is_public_info = is_public_info
         # identity value of instance
         self.pm_idn = pm_idn 
-        """
-        # memory cache used in condensing suggested improvements
-        self.mc = deque()
-        """
-
-        self.registered_mg = None
 
     """
     """
@@ -561,6 +587,15 @@ class StdDecFunction:
 
 ########################################################################################
 
+def accumulate_ea_map(eam):
+    assert type(eam) in {dict,defaultdict}
+    expected,actual = 0.,0.
+
+    for (k,v) in eam.items():
+        expected += v[0]
+        actual += v[1]
+    return expected,actual
+
 """
 container used to store the values for a Player's
 defensive intelligence. Defense intelligence includes:
@@ -593,11 +628,11 @@ class DefInt:
         self.edge_hit_survival_rate = defaultdict(int)
 
         ## variables used to analyze other players' ResourceGraphs
-        # pmove -> player -> node -> expected,actual
+        # pmove -> player -> node/edge -> expected,actual
         self.pmove_playernode_recep = defaultdict(defaultdict)
         self.pmove_playeredge_recep = defaultdict(defaultdict)
 
-        # pmove -> node -> expected,actual
+        # pmove -> node/edge -> expected,actual
         self.ea_self_target_node = defaultdict(defaultdict)
         self.ea_self_target_edge = defaultdict(defaultdict)
         return
@@ -610,7 +645,37 @@ class DefInt:
         c = 0.
         for (k,v) in dx.items():
             c += v[-1]
-        return c 
+        return c
+
+    """
+    """
+    def cumulative_expected_actual_of_move(self,pm_idn,is_self:bool):
+        assert type(is_self) == bool
+        exp,act = 0.,0.
+
+        if is_self:
+            q1 = self.ea_self_target_node[pm_idn]
+            exp1,act1 = accumulate_ea_map(q1)
+            exp += exp1
+            act += act1
+
+            q2 = self.ea_self_target_edge[pm_idn]
+            exp1,act1 = accumulate_ea_map(q2)
+            exp += exp1
+            act += act1
+        else:
+            q1 = self.pmove_playernode_recep[pm_idn]
+            for v in q1.values():
+                exp1,act1 = accumulate_ea_map(v)
+                exp += exp1
+                act += act1
+
+            q1 = self.pmove_playeredge_recep[pm_idn]
+            for v in q1.values():
+                exp1,act1 = accumulate_ea_map(v)
+                exp += exp1
+                act += act1
+        return exp,act
 
     """
     """
@@ -823,7 +888,8 @@ def generate_PMove_helper__type_assymetric_unit(pidn,por,rg1,rg2):
 ########################################################################################
 
 """
-Generic move descriptor used by <PMLog> 
+Generic move descriptor used to search a <PMLog> instance for
+samples that match the descriptor.
 
 PMove: pm_idn
 AMove: -
@@ -896,7 +962,7 @@ class PMLog:
         assert log_type in {"full context", "specific"}
         self.mh = []
         self.lt = log_type
-
+    
     def add_artifact(self,artifact):
         if self.lt == "full context":
             assert type(artifact) == PContext
@@ -918,8 +984,8 @@ class PMLog:
 
     def most_recent_artifact__full_context(self,artifact,i):
         q = self.mh[i]
-        return artifact.selection == q 
-        
+        return artifact == q.selection
+
     def most_recent_artifact__specific(self,artifact,i):
         q = self.mh[i]
         return artifact == q

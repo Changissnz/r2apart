@@ -523,50 +523,6 @@ class ResourceGraph:
         self.nic = DefaultNodeIdnCounter(str(v))
         return
 
-    #-#-#-##-#-#-##-#-#-##-#-#-##-#-#-##-#-#-##-#-#-##-#-#-##-#-#-##-#-#-#
-    '''
-    def add_neg_chip(self,nc):
-        assert type(nc) == NegoChip
-
-        # check that there are no duplicates
-        for x in self.neg_chips:
-            stat1 = x.loc == nc.loc
-            stat2 = x.owner == nc.owner
-            stat3 = x.neg_type == nc.neg_type
-            if stat1 and stat2 and stat3:
-                return False
-        self.neg_chips.append(nc) 
-        return True
-
-    def delete_neg_chip(self,node_loc:str,owner,neg_type:str,exclude_owner:bool):
-        j = None
-        for i in range(len(self.neg_chips)):
-            if self.neg_chips[i].loc != node_loc:
-                continue
-            if self.neg_chips[i].neg_type != neg_type: 
-                continue
-            if type(owner) != type(None):
-                q = self.neg_chips[i].owner != owner
-                if exclude_owner: q = not q  
-                if q: continue
-            j = i
-            break
-
-        if j != None:
-            self.neg_chips.pop(j)
-        return
-
-    """
-    return:
-    - the remaining nodes that qualify for negochip of `ntype`
-      for placement
-    """
-    def remaining_nodes_of_negochip_type(self,ntype): 
-        return -1
-    '''
-
-    #-#-#-##-#-#-##-#-#-##-#-#-##-#-#-##-#-#-##-#-#-##-#-#-##-#-#-##-#-#-##-#-#-#
-
     ############################ graph complement functions ################
     
     # TODO: test
@@ -577,9 +533,6 @@ class ResourceGraph:
         # construct a new MicroGraph
         mg_ref = MicroGraph.from_ResourceGraph(self)
         mgx = MicroGraph(defaultdict(set))
-        #-#-#-#-#
-        ##q = set([x.loc for x in self.neg_chips if x.neg_type == "decep"])
-        #-#-#-#-#
         ns = set(mg_ref.dg.keys())
 
         for (k,v) in mg_ref.dg.items():
