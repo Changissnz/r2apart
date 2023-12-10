@@ -60,6 +60,7 @@ return:
 """
 def rank_stddict_floatvalues(d,reverse=False):
     assert type(d) in {dict,defaultdict}
+    print("D: ", d)
 
     # convert d to a list
     dx = [(k,v) for (k,v) in d.items()]
@@ -76,6 +77,8 @@ def rank_stddict_floatvalues(d,reverse=False):
     dranks[dx[0][0]] = r
 
     for q in dx[1:]:
+        print("X: ", x)
+        print("Q: ", q)
         if abs(x - q[1]) > 10 ** -5:
             r += 1 
             x = q[1]
@@ -508,7 +511,7 @@ class NInfo:
 
     def __init__(self,is_nego,destination_player,chipinfo_seq):
         # check for assertion
-        q = NMove(is_nego,nego_type,destination_player,chipinfo_seq) 
+        q = NMove(is_nego,destination_player,chipinfo_seq) 
         self.is_nego = is_nego
         self.destination_player = destination_player
         self.chipinfo_seq = chipinfo_seq
@@ -899,7 +902,7 @@ NMove: is_nego,nego_type,destination_player
 class GenericMoveDesc:
 
     def __init__(self,move_type,info_args):
-        assert mt in {PMove,AMove,MMove,NMove}
+        assert move_type in {PMove,AMove,MMove,NMove}
         self.mt = move_type
         self.ia = info_args
         if self.mt == PMove:

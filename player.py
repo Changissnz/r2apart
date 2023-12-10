@@ -682,7 +682,7 @@ class PDEC:
     def gauge_nmove_payoff(self,player,max_chip_number):
         ninego = self.gauge_nmove_negochip(player,max_chip_number)
         ninega = self.gauge_nmove_negachip(player,max_chip_number)    
-        self.pcontext.pmove_prediction.extend([ninego,ninega])
+        self.pcontext.nmove_prediction.extend([ninego,ninega])
         return
 
     # TODO: test
@@ -727,7 +727,7 @@ class PDEC:
         p_idn = None if p_idn == self.pidn else p_idn
         # case: deception
         if neg_type == "deception":
-            return self.def_int.cumulative_nOrE_delta(n,True)
+            return self.def_int.cumulative_nOrE_delta__most_recent(n,True)
         # case: distort
         expected,actual = self.def_int.cumulative_expected_actual_of_move_by_node_info(p_idn,n)
         return (actual * DEFAULT_NEGOCHIP_MULTIPLIER) - actual
@@ -755,8 +755,8 @@ class PDEC:
             # starting nodeset is all nodes of player
         if player.idn == self.pidn:
             sn = set(player.rg.node_health_map.keys())
-            nl1 = self.available_nodes_by_info(player.idn,"distort",sn)
-            nl2 = self.available_nodes_by_info(player.idn,"deception",sn)
+            nl1 = self.nc.available_nodes_by_info(player.idn,"distort",sn)
+            nl2 = self.nc.available_nodes_by_info(player.idn,"deception",sn)
             # case: other
             # starting nodeset is known nodes of player
         else:
@@ -765,7 +765,7 @@ class PDEC:
             #   subcase: None
             if type(qx) == MicroGraph:
                 sn = set(qx.dg.keys())
-            nl1 = self.available_nodes_by_info(self.idn,"distort",sn)
+            nl1 = self.nc.available_nodes_by_info(self.pidn,"distort",sn)
         return nl1,nl2
 
     def gauge_nmove_negachip(self,player,max_chip_number):
@@ -810,7 +810,7 @@ class PDEC:
         return e - a
 
     def negachip_candidates(self,player):
-        candidates = deepcopy(self.pdec.suspected_negochips[player.idn])
+        candidates = deepcopy(self.suspected_negochips[player.idn])
         return candidates
 
     ##################### extraneous machine-learning functions #############
@@ -921,7 +921,7 @@ class Player:
     def pmove_idn_to_index(self,idn):
         index = -1
         for (i,x) in enumerate(self.ms):
-            if x.idn == idn:
+            if x.pm_idn == idn:
                 return i
         return index
 
@@ -965,7 +965,7 @@ class Player:
         l = int(round(len(self.rg.node_health_map) / 3))
 
         for p in other_players:
-            self.gauge_nmove_payoff(p,l)
+            self.pdec.gauge_nmove_payoff(p,l)
         return
     
     ######### register XMoves
@@ -1193,6 +1193,23 @@ class Player:
         eaself,eaothers = self.diff_ea_of_moves()
         mro = self.most_recent_move_occurrences()
 
+        print("PMOVE PRIORITY")
+        print("* MPSELF")
+        print(mpself)
+        print()
+        print("* MPOTHERS")
+        print(mpothers)
+        print()
+        print("* EASELF")
+        print(eaself)
+        print()
+        print("* EAOTHERS")
+        print(eaothers)
+        print()
+        print("* MRO")
+        print(mro)
+        print()
+
         # rank the values for
         rx1 = rank_stddict_floatvalues(mpself)
         rx2 = rank_stddict_floatvalues(mpothers)
@@ -1216,8 +1233,8 @@ class Player:
             ns1,es1 = mg1.ve_score()
             ns2,es2 = mg2.ve_score()
 
-            map_self[m.pm_idn] = (ns1,es1)
-            map_others[m.pm_idn] = (ns2,es2)
+            map_self[m.pm_idn] = ns1 + es1
+            map_others[m.pm_idn] = ns2 + es2
         return map_self,map_others
 
     """
@@ -1255,7 +1272,6 @@ class Player:
     def choose(self):
         # dummy choice is PMove
         return -1
-
 
     """
     used for testing

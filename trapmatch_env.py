@@ -84,6 +84,8 @@ class TMEnv:
         # calculate MMove info
         self.players[p_index].one_gauge_MMove()
 
+        # calculate NMove info
+        self.players[p_index].one_gauge_NMove(other_players)
         return
 
     def all_pmove_AND_player_combos(self,p_index:int):

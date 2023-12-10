@@ -32,7 +32,7 @@ DEFAULT_SAMPLE_RESOURCEGRAPHS = [sample_resource_graph_1,\
 
 # decep allows for a player's representation of its <ResourceGraph> as an edge complement
 # distort allows for player to magnify its own payoff or to divide the payoff of its competitors
-NEGO_TYPES = ["decep","distort"]
+NEGO_TYPES = ["deception","distort"]
 
 def ratio_x_in_range(x,r):
     assert r[0] <= r[1]
@@ -269,17 +269,23 @@ class NegoContainer:
       of `player_idn` and `nego_type` that cannot be duplicated.
     """
     def available_nodes_by_info(self,player_idn,nego_type,starting_nodeset):
-        assert nego_type in NEGO_TYPES
+        assert nego_type in NEGO_TYPES, "nego type {} not valid".format(nego_type)
         assert type(starting_nodeset) == set
 
         available = set() 
         for n in starting_nodeset:
-            q = self.container[n]
+            # case: empty => available
+            if n not in self.container:
+                available |= {n}
+                continue
 
+            q = self.container[n]
+            """
             # case: empty => available
             if type(n) == type(None):
                 available |= {n}
                 continue
+            """
 
             stat = True
             for q_ in q:
