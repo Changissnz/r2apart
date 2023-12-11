@@ -17,13 +17,19 @@ class TMEnv:
 
     """
     """
-    def __init__(self,players,game_mode_1,game_mode_2,farse_mach=None,):
+    def __init__(self,players,game_mode_1,game_mode_2,farse_mach=None,\
+        verbose = True):
         assert game_mode_1 in GAME_MODES
         assert game_mode_2 in GAME_MODES2
         self.players = players
         self.game_mode_1 = game_mode_1
         self.game_mode_2 = game_mode_2
         self.fm = farse_mach
+        self.verbose = verbose
+
+        # set the player verbosity
+        for p in self.players:
+            p.verbose = self.verbose
         return
 
     """
@@ -75,6 +81,7 @@ class TMEnv:
     """
     def feed_moving_player_info(self,p_index:int):
         # calculate PMove info
+        if self.verbose: print("^ Gauging PMoves for player {}".format(self.players[p_index].idn))
         self.all_pmove_AND_player_combos(p_index)
 
         # calculate AMove info
@@ -86,6 +93,12 @@ class TMEnv:
 
         # calculate NMove info
         self.players[p_index].one_gauge_NMove(other_players)
+
+        if self.verbose:
+            print("-- Context acquired")
+            self.players[p_index].display_context()
+
+
         return
 
     def all_pmove_AND_player_combos(self,p_index:int):

@@ -480,7 +480,9 @@ class ResourceGraph:
         assert type(i) in {type(None),int}
         if type(i) == int:
             random.seed(i)
+        """
         print("D: ",d)
+        """
         assert type(d) == int
         assert is_valid_range(connectivity_range,[0.,1.]) 
         assert is_valid_range(hr)

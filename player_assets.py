@@ -60,7 +60,9 @@ return:
 """
 def rank_stddict_floatvalues(d,reverse=False):
     assert type(d) in {dict,defaultdict}
+    """
     print("D: ", d)
+    """
 
     # convert d to a list
     dx = [(k,v) for (k,v) in d.items()]
@@ -77,8 +79,10 @@ def rank_stddict_floatvalues(d,reverse=False):
     dranks[dx[0][0]] = r
 
     for q in dx[1:]:
+        """
         print("X: ", x)
         print("Q: ", q)
+        """
         if abs(x - q[1]) > 10 ** -5:
             r += 1 
             x = q[1]
@@ -179,7 +183,9 @@ class PMove:
     """
     ## TODO: test
     def gauge_payoff_seq_on_RG(self,rg:ResourceGraph,is_target:bool):
+        """
         print("GAUGING PAYOFF SEQ ON RG")
+        """
         nhdelta = defaultdict(float)
         ehdelta = defaultdict(float)
         iter_stringizededges = []
@@ -466,7 +472,6 @@ class AInfo:
         s += str(self.s5[0]) + "\n"
         s += "\t\t-- 75 percentile" + "\n"
         s += str(self.s5[1]) + "\n"
-        s += "--------------------" 
         return s
 
     """
@@ -517,7 +522,11 @@ class NInfo:
         self.chipinfo_seq = chipinfo_seq
         return 
 
-
+    def __str__(self):
+        s = "is nego: {}".format(self.is_nego)
+        s += "\n" + "affected player: {}".format(self.destination_player)
+        s += "\n" + "chip info:\n" + str(self.chipinfo_seq)
+        return s
 
 #######################################################################################
 

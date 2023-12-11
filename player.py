@@ -1,6 +1,6 @@
 from player_assets import *
 
-PCONTEXT_DISPLAY_TYPES = {"PMove","AMove","MMove"} 
+PCONTEXT_DISPLAY_TYPES = {"PMove","AMove","MMove","NMove"} 
 
 """
 NOTE: this function is designed to be the default, but program can use
@@ -126,7 +126,7 @@ class PContext:
         # *see `load_amove_info* for variable info.
         self.amove_prediction = None
 
-        self.mmove_prediction = defaultdict(float)
+        self.mmove_prediction = None
 
         # iterable<NInfo> 
         self.nmove_prediction = []
@@ -201,7 +201,9 @@ class PContext:
 
         stat = len(nr) == 0 or len(dn) == 0
         if stat:
+            """
             print("NADA")
+            """
             return
 
         ##print("LENS:")
@@ -212,6 +214,13 @@ class PContext:
         
         total_node_delta = sum(list(dn.values()))
         total_edge_delta = sum(list(de.values()))
+
+        """
+        if self.verbose:
+            print("-- total node delta: {}".format(total_node_delta))
+            print("-- total edge delta: {}".format(total_edge_delta))
+        """
+
         self.pmove_prediction[mv.pm_idn][player.idn] =  PInfo(x1,x2,si,nr,\
             total_node_delta,total_edge_delta)        
         return
@@ -269,7 +278,7 @@ class PDEC:
 
     def __init__(self,pidn:str,pcontext_mapper:PContextMapper,\
         def_int =DefInt(DEFAULT_DEFINT_MEMSIZE),\
-        pkdb = PKDB(),game_mode = "noneg"):
+        pkdb = PKDB(),game_mode = "noneg",verbose=False):
         assert game_mode in GAME_MODES, "invalid game mode"
 
         # TODO: delete this, not used
@@ -293,6 +302,7 @@ class PDEC:
         # greatest common subgraph, used for <AMove> calculation
         self.gcs = [None,None,None]
 
+        self.verbose = verbose
         return
 
     ###################### predictive information for <PMove> ##################
@@ -353,9 +363,13 @@ class PDEC:
     def payoff_info_for_player(self,pidn,pmove:PMove):
         assert type(pidn) in {str,Player} 
 
+        ###
+        """
         print("PRINT TEST")
         print(self.pkdb.other_mg[pidn])
         print("-----")
+        """
+        ###
 
         rg = None
         is_target = None
@@ -405,7 +419,9 @@ class PDEC:
             # case: not self
         if self.pidn != pidn:
             q = self.suspected_negochips[pidn]
+            """
             print("Q")
+            """
             # player does not exact magnitude of negochip, assumes
             # DEFAULT_NEGOCHIP_MULTIPLIER 
             q2 = set()
@@ -682,7 +698,10 @@ class PDEC:
     def gauge_nmove_payoff(self,player,max_chip_number):
         ninego = self.gauge_nmove_negochip(player,max_chip_number)
         ninega = self.gauge_nmove_negachip(player,max_chip_number)    
-        self.pcontext.nmove_prediction.extend([ninego,ninega])
+        if type(ninego) != type(None):
+            self.pcontext.nmove_prediction.append(ninego)
+        if type(ninega) != type(None):
+            self.pcontext.nmove_prediction.append(ninega)
         return
 
     # TODO: test
@@ -702,10 +721,14 @@ class PDEC:
                 x = self.gauge_negochip_improvement(player.idn,n,"deception")
                 data.append((x,n,"deception"))
         
+        if len(data) == 0:
+            return None
+
         nhsr = sorted(data,key=lambda x: abs(x[0]),reverse=True)
         q = nhsr[:max_chip_number]
         nx1 = NInfo(True,player.idn,q)
-        
+        return nx1
+
     """
     gauge of <NegoChip> depends on `neg_type`:
     * `neg_type` = deception:
@@ -779,10 +802,14 @@ class PDEC:
             f = self.gauge_negachip_improvement(player.idn,k,v)
             expected_improvements.append((f,k,v)) 
 
+        if len(expected_improvements) == 0:
+            return None
+
             # rank the samples
         nhsr = sorted(expected_improvements,key=lambda x: abs(x[0]),reverse=True)
         q = nhsr[:max_chip_number]
         nx1 = NInfo(False,player.idn,q)
+        return nx1
 
     """
     fetches the cumulative (expected,actual) delta pair for the 
@@ -813,18 +840,10 @@ class PDEC:
         candidates = deepcopy(self.suspected_negochips[player.idn])
         return candidates
 
-    ##################### extraneous machine-learning functions #############
-    # TODO: used to refine predictive capabilities.
-    """
-    expected-actual difference
-    """
-    def ea_diff(self):
-        return -1
-
 class Player:
 
     def __init__(self,rg,ms,idn = None,excess=1000,pcontext_mapper=None,\
-        pml_type="full context"):
+        pml_type="full context",verbose=False):
         # resource graph
         self.rg = rg
         # move sequence
@@ -857,6 +876,7 @@ class Player:
         self.pdec = PDEC(idn,pcontext_mapper)
         # player move log
         self.pml = PMLog(pml_type)
+        self.verbose = verbose
 
     ########################## instantiation and display methods
 
@@ -880,11 +900,26 @@ class Player:
         # generate the moves 
         return Player(rg,moveseq,idn,excess,pcm)
 
-    def display_context(self,context_displays=["PMove","AMove","MMove"]):
+    """
+    typically called by TMEnv to set all players to `verbosity` mode
+    """
+    def set_verbosity(self,verbosity):
+        self.verbose = verbosity
+        self.pdec.verbose = verbosity
+
+    """
+    typically called by TMEnv to set all players to game modes
+    """
+    def set_game_mode(self,gm1,gm2):
+        return -1
+
+    def display_context(self,context_displays=["PMove","AMove","MMove","NMove"]):
         assert type(context_displays) == list
 
         if type(self.pdec.pcontext) == type(None):
+            """
             print("NADA")
+            """
             return
 
         print(context_displays)
@@ -897,22 +932,26 @@ class Player:
                     for (k2,v2) in v.items():
                         print("affector {}".format(k2))
                         print(str(v2))
-                    print("--------------------")
             elif c == "AMove":
                 if type(self.pdec.pcontext.amove_prediction) == type(None):
+                    """
                     print("NADA")
+                    """
                     continue
 
             elif c == "MMove":
                 if type(self.pdec.pcontext.mmove_prediction) == type(None):
+                    """
                     print("NADA")
+                    """
                     continue 
                 print(str(self.pdec.pcontext.mmove_prediction))
-                print("--------------------")
             else:
-                print("TODO") 
-                return -1
-        return -1
+                for x in self.pdec.pcontext.nmove_prediction:
+                    print(x)
+                    print("\t---/---/---/---\t")
+        print("--------------------")
+        return
 
     def display_PMoves(self):
         for x in self.ms:
@@ -943,14 +982,17 @@ class Player:
         return Player(rgx,None,self.idn,0)
 
     def one_gauge_PMove(self,p,move_index:int):
-        assert type(p) == Player 
+        assert type(p) == Player
+        if self.verbose: print("* gauging PMove {} on player {}".format(self.ms[move_index].pm_idn,p.idn))
         self.pdec.gauge_pmove_payoff(p,deepcopy(self.ms[move_index]))
         return 
 
     def one_gauge_AMove(self,other_players):
+        if self.verbose: print("* gauging AMove")
         self.pdec.gauge_amove_payoff(self,other_players)
 
     def one_gauge_MMove(self):
+        if self.verbose: print("* gauging MMove")
 
         # get the minumum health
         mnh = min([v for v in self.rg.node_health_map.values()])
@@ -962,6 +1004,8 @@ class Player:
         self.pdec.gauge_mmove_payoff(mnh,meh,mpd) 
 
     def one_gauge_NMove(self,other_players):
+        if self.verbose: print("* gauging NMove")
+
         l = int(round(len(self.rg.node_health_map) / 3))
 
         for p in other_players:
@@ -1193,6 +1237,8 @@ class Player:
         eaself,eaothers = self.diff_ea_of_moves()
         mro = self.most_recent_move_occurrences()
 
+            ####
+        """
         print("PMOVE PRIORITY")
         print("* MPSELF")
         print(mpself)
@@ -1209,6 +1255,8 @@ class Player:
         print("* MRO")
         print(mro)
         print()
+        """
+            ####
 
         # rank the values for
         rx1 = rank_stddict_floatvalues(mpself)
