@@ -153,7 +153,7 @@ class PContext:
                 d[k] = x 
         return d
 
-    def condensed_form(self):
+    def condensed_form(self,reduced_form:bool):
         q = []
 
         if type(self.pmove_prediction) != type(None):
@@ -177,8 +177,82 @@ class PContext:
             q.append(None)
         return q
 
-    def reduced_condensed_form(self):
-        return -1
+    ###### processor for decision function
+
+    def std_dec_func_proc(self,sdf):
+        pproc = self.std_dec_func_PInfo_proc(sdf)
+        aproc = self.std_dec_func_AInfo_proc(sdf)
+        mproc = self.std_dec_func_MInfo_proc(sdf)
+        nproc = self.std_dec_func_NInfo_proc(sdf)
+
+        pcd = PContextDecision(pproc,aproc,mproc,nproc)
+        pcd.rank()
+        return pcd
+
+    """
+    """
+    def std_dec_func_PInfo_proc(self,sdf):
+        fpd = self.format_PMove_data()
+        q = {}
+        for (k,v) in fpd.items():
+            q[k] = sdf.output(v,"PInfo")
+        return q
+
+    def std_dec_func_AInfo_proc(self,sdf):
+        amp1,amp2 = self.format_AMove_data()
+        q = {}
+        q["AInfo#1"] = sdf.output(amp1,"AInfo#1")
+        q["AInfo#2"] = sdf.output(amp2,"AInfo#2")
+        return q
+
+    def std_dec_func_MInfo_proc(self,sdf):
+        amp1,amp2 = self.format_MMove_data()
+        q = {}
+        q["MInfo#1"] = sdf.output(amp1,"MInfo#1")
+        q["MInfo#2"] = sdf.output(amp2,"MInfo#2")
+        return q
+
+    def std_dec_func_NInfo_proc(self,sdf):
+        q = []
+        vc = self.format_NMove_data()
+        for vc_ in vc:
+            q.append(sdf.output(vc_,"NInfo"))
+        return q
+
+    ###### preprocessing information before loading into
+    ###### 
+
+    """
+    - return:
+    PMove idn -> 11-vec
+    """
+    def format_PMove_data(self):
+        q = {}
+        c = STD_DEC_WEIGHT_INDEXSIZE_MAP["PInfo"][1] 
+        for (k,v) in self.pmove_prediction.items():
+            qr = np.empty((0,c))
+            for (k2,v2) in v.items():
+                vx = np.array(v2.std_condense())
+                qr = np.vstack((qr,vx))
+            result = np.sum(qr,axis=0)
+            q[k] = result
+        return q
+
+    def format_AMove_data(self):
+        if type(self.amove_prediction) == type(None):
+            return None
+        amp1,amp2 = self.amove_prediction.std_condense()
+        return amp1,amp2
+
+    def format_MMove_data(self):
+        x1,x2 = self.mmove_prediction.std_condense()
+        return x1,x2 
+
+    def format_NMove_data(self):
+        r = []
+        for q in self.nmove_prediction:
+            r.append(q.std_condense())
+        return r
 
     ##################### update methods
 
@@ -1319,7 +1393,12 @@ class Player:
 
     def choose(self):
         # dummy choice is PMove
-        return -1
+        sdf = self.pdec.context_mapper.sdf
+        pcd = self.pdec.pcontext.std_dec_func_proc(sdf)
+        if len(pcd.ranking) == 0:
+            return None
+        x = pcd.ranking[0]
+        return x 
 
     """
     used for testing

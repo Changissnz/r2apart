@@ -123,8 +123,6 @@ def private_potency_continuous_default_function(h,h_delta,c,p):
 def private_potency_boolean_default_function(h_post,c,p):
     return int(h_post <= c * p / 2.) 
 
-
-
 ################################################################
 
 # the co-payoff command that allows for effects to take place between two or more players
@@ -351,6 +349,9 @@ class PInfo:
         q.extend([self.nd,self.ed])
         return q
 
+    def std_condense(self):
+        return self.condense() 
+
     def __str__(self):
         s = "continuous score:\t" + str(self.ne_cpotency_pair) 
         s += "\nboolean score:\t" + str(self.ne_bpotency_pair)
@@ -433,6 +434,21 @@ class MInfo:
         x2 = [len(self.ne1[0]),len(self.ne1[1]),\
             len(self.ne2[0]),len(self.ne2[1]),deepcopy(self.mhsr)]
         return x1,x2
+
+    def std_condense(self):
+        c1,c2,c3 = [],[],[]
+        for v in self.msd.values():
+            c1.append(v[0])
+            c2.append(v[1])
+            c3.append(v[2])
+        q1 = mean_safe_division(c1)
+        q2 = mean_safe_division(c2)
+        q3 = mean_safe_division(c3)
+        
+        x1 = [q1,q2,q3]
+        x2 = [len(self.ne1[0]),len(self.ne1[1]),\
+            len(self.ne2[0]),len(self.ne2[1]),deepcopy(self.mhsr)]
+        return x1,x2
         
 ######################################################################################
 
@@ -496,6 +512,24 @@ class AInfo:
             v2.extend(self.s4[str(vx_)])
         return v,v2
 
+    def std_condense(self):
+        # player info
+        v = [deepcopy(self.s3)]
+        v.extend(deepcopy(self.s5[0]))
+        v.extend(deepcopy(self.s5[1]))
+
+        # anti-player info
+            # mean of s1
+        s1mean = mean_safe_division(list(set(self.s1.values())))
+            # mean of s2
+        s2mean = mean_safe_division(list(set(self.s2.values())))
+            # mean of s4[0] and s4[1]
+        s4seq = mean_safe_division(list(set(self.s4.values())))
+        s40mean = mean_safe_division([x[0] for x in s4seq])
+        s41mean = mean_safe_division([x[1] for x in s4seq])
+        v2 = [s1mean,s2mean,s40mean,s41mean]
+        return v,v2
+
 #######################################################################################
 
 class NMove:
@@ -510,8 +544,6 @@ class NMove:
         self.chipinfo_seq = chipinfo_seq
         return
 
-    
-
 class NInfo:
 
     def __init__(self,is_nego,destination_player,chipinfo_seq):
@@ -519,6 +551,7 @@ class NInfo:
         q = NMove(is_nego,destination_player,chipinfo_seq) 
         self.is_nego = is_nego
         self.destination_player = destination_player
+        # delta,loc,type
         self.chipinfo_seq = chipinfo_seq
         return 
 
@@ -528,17 +561,27 @@ class NInfo:
         s += "\n" + "chip info:\n" + str(self.chipinfo_seq)
         return s
 
+    """
+    return: 
+    - two-tuple, [0|1 for is_nego, cumulative delta from `chipinfo_seq`]
+    """
+    def std_condense(self):
+        x1 = [int(self.is_nego)]
+        x = sum([q[0] for q in self.chipinfo_seq])
+        x1.append(x)
+        return x1
+
 #######################################################################################
 
-STD_DEC_WEIGHT_INDEXSIZE_MAP = {"PInfo":0,\
-    "AInfo#1":1,\
-    "AInfo#2":2,\
-    "MInfo#1":3,\
-    "MInfo#2":4,\
-    "MInfo#3":5,\
-    "NInfo#1":6,\
-    "NInfo#2":7,\
-    "NInfo#3":8}
+STD_DEC_WEIGHT_INDEXSIZE_MAP = {"PInfo":(0,11),\
+    "AInfo#1":(1,5),\
+    "AInfo#2":(2,4),\
+    "MInfo#1":(3,3),\
+    "MInfo#2":(4,5),\
+    "NInfo":(5,2)} 
+
+STD_DEC_WEIGHT_SEQLABELS = ["PInfo","AInfo#1","AInfo#2",\
+        "MInfo#1","MInfo#2","NInfo"] 
 
 # standard decision function used by players in <r2apart>. 
 # The following variables are to be used in the decision 
@@ -554,13 +597,13 @@ class StdDecFunction:
         [2] AInfo weights vec #2, size 4
         [3] MInfo weights vec #1, size 3
         [4] MInfo weights vec #2, size 5
-        [5] MInfo weights vec #3, size ??
-        [6] NInfo weights vec #1, size ??
-        [7] NInfo weights vec #2, size ??
-        [8] NInfo weights vec #3, size ??
+        [5] NInfo weights vec #1, size 2
     """
     def __init__(self,weights=None):
         self.weights = weights
+
+        if type(self.weights) == type(None):
+            self.instantiate_default_weights()
         return
 
     # TODO: 
@@ -568,17 +611,12 @@ class StdDecFunction:
     sets `weights` to 1-vector in the event that null weights are given 
     """
     def instantiate_default_weights(self):
-        for i in range(9):
-            return -1
-        
-        return -1
-
-    """
-    """
-    def std_reduce_condensed_move(self,move):
-        assert type(move) in {PMove,AMove,MMove,NMove}
-
-        return -1
+        q = None
+        self.weights = []
+        for x in STD_DEC_WEIGHT_SEQLABELS:
+            q = [1 for i in range(STD_DEC_WEIGHT_INDEXSIZE_MAP[x][1] + 1)]
+            self.weights.append(q)
+        return
 
     """
     rcm_vec := reduced-condensed vector repr. of move
@@ -594,8 +632,41 @@ class StdDecFunction:
     adjusts weights. 
     """
     def adjust(self):
-
         return -1
+
+class PContextDecision:
+
+    def __init__(self,pproc,aproc,mproc,nproc):
+        assert type(pproc) == dict
+        assert type(pproc) == type(aproc) and type(pproc) == type(aproc)
+        assert type(nproc) == list
+
+        # dict, PMove idn -> float score
+        self.pproc = pproc
+        # dict, AMove type -> float score
+        self.aproc = aproc
+        # dict, MMove type -> float score 
+        self.mproc = mproc
+        # vec, float score corresponding to each NMove index
+        self.nproc = nproc
+        self.ranking = None
+
+    def rank(self):
+        q = self.to_one_vec()
+        self.ranking = sorted(q,key=lambda x:x[1],reverse=True)
+        return deepcopy(self.ranking)
+
+    """
+    return:
+
+    """
+    def to_one_vec(self):
+        q = []
+        q.extend([("PMove-" + k,v) for (k,v) in self.pproc.items()])
+        q.extend([(k,v) for (k,v) in self.aproc.items()])
+        q.extend([(k,v) for (k,v) in self.mproc.items()])
+        q.extend([("NMove-" + str(i),v) for (i,v) in enumerate(self.nproc)])
+        return q
 
 ########################################################################################
 
