@@ -616,8 +616,8 @@ class ResourceGraph:
         self.node_health_map[node_info[0]] = node_info[1]
         return
 
-    def delete_node(self,node):
-        del node
+    def delete_node(self,node_idn):
+        del self.node_health_map[node_idn]
         return
 
     def add_edge(self,edge_pair,edge_health):
@@ -706,10 +706,23 @@ class ResourceGraph:
                 x += self.edges_health_map[q]
         return x
 
+    def ne_extremum(self):
+        nl = list(self.node_health_map.values())
+        el = list(self.edges_health_map.values()) 
+        q1 = (min(nl),max(nl))
+        q2 = (min(el),max(el))
+        return (q1,q2)
+
     ############################ isomorphism functions ################
 
     # the subgraph isomorphism problem
     # use with caution!! 
+    """
+    return:
+    - if all_iso:
+        list<dict, node self -> node other>
+      otherwise: 
+    """
     def subgraph_isomorphism(self,mg,all_iso=False):#,include_extra=0):
         search_candidates = []
         

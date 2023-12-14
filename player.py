@@ -144,13 +144,11 @@ class PContext:
 
         return -1
 
-    def player_PMove_gauge(self,pidn):
+    def player_MMove_gauge(self,pidn):
         d = defaultdict(None)
         for (k,v) in self.pmove_prediction.items():
             x = v[pidn]
-
-            if type(x) != type(None):
-                d[k] = x 
+            d[k] = deepcopy(self.ne_additions)
         return d
 
     def condensed_form(self,reduced_form:bool):
@@ -739,7 +737,7 @@ class PDEC:
 
         # iterate through the possible moves and determine
         # the possible additions for each of the moves
-        pinfs = self.pcontext.player_PMove_gauge(self.pidn)
+        pinfs = self.pcontext.player_MMove_gauge(self.pidn)
         mxq = self.def_int.minimal_hit_survival_rate()
 
         if type(mxq[0]) == type(None):
@@ -1076,7 +1074,7 @@ class Player:
         # get the mmove payoff
         x = [(m.pm_idn,m.payoff) for m in self.ms]
         mpd = defaultdict(None,x)
-        self.pdec.gauge_mmove_payoff(mnh,meh,mpd) 
+        self.pdec.gauge_mmove_payoff(mnh,meh,mpd)
 
     def one_gauge_NMove(self,other_players):
         if self.verbose: print("* gauging NMove")
@@ -1266,6 +1264,165 @@ class Player:
         # removed
         self.pdec.def_int.remove_deceased(nr,er)
         return
+
+    #############################################################
+
+    def register_AMove(self,amove,accumulated_health):
+        mgx = MicroGraph.from_ResourceGraph(amove.pt)
+        iso_reg = self.rg.subgraph_isomorphism(mgx,True)
+
+        # calculate isomorphic attack on image
+        iso_reg = self.rg.subgraph_isomorphism(mgx,True)
+        mgx = MicroGraph(defaultdict(set))
+        for ir in iso_reg:
+            mgx2 = self.rg.isomap_to_isograph(mgx,ir)
+            mgx = mgx + mgx2
+
+        rgx_ = ResourceGraph.from_MicroGraph(mgx)
+
+        l = len(rgx_.node_health_map) + len(rgx_.edges_health_map)
+        if l == 0:
+            return 
+        distributed_delta = accumulated_health / l
+
+        for n in rgx_.node_health_map.keys():
+            self.rg.update_node(n,distributed_delta)
+        for n in rgx_.edges_health_map.keys():
+            self.rg.update_edge(n,distributed_delta)
+        return
+
+    def register_AMove_hit(self,amove):
+        mgx = MicroGraph.from_ResourceGraph(amove.at)
+
+        # calculate isomorphic attack on image
+        iso_reg = self.rg.subgraph_isomorphism(mgx,True)
+        mgx = MicroGraph(defaultdict(set))
+        for ir in iso_reg:
+            mgx2 = self.rg.isomap_to_isograph(mgx,ir)
+            mgx = mgx + mgx2
+        rgx_ = ResourceGraph.from_MicroGraph(mgx)
+
+        # iterate through all samples and collect relevant 
+        # set of nodes and edges, deleting each one and adding
+        # their health to a cumulative float value.
+        f = 0.
+            # iterate through edges
+        q = list(rgx_.edges_health_map.keys())
+        q2 = set()
+        while len(q) > 0:
+            x = q.pop(0)
+            x2 = x.split(",")
+            x_ = x2[1] + "," + x2[0]
+
+            # case: already captured
+            if x_ in q2:
+                continue
+
+            # case: not captured yet
+                # add to cache and to cumulative
+            q2 = q2 | {x}
+            f += self.rg.edges_health_map[x]
+
+                # delete undirected edge from `rg`
+            self.rg.delete_edge(x)
+            self.rg.delete_edge(x_)
+
+        q = list(rgx_.node_health_map.keys())
+        for q_ in q:
+            f += self.rg.node_health_map[q_]
+            self.rg.delete_node(q_)
+        return f 
+
+    #############################################################
+
+    def register_MMove(self,mmove):
+
+        if mmove.move_type == "MMove#1":
+            # fetch the node and edge additions from PInfo
+            pm_idn = mmove.move_data[0]
+            q = self.pdec.pcontext.pmove_prediction[pm_idn][self.pidn].ne_additions
+            self.default_NE_addition_operation(q[0],q[1])
+            return
+        elif mmove.move_type == "MMove#2":
+            q = deepcopy(mmove.move_data[0])
+            self.default_NE_withdrawal_operation(q[0],q[1])
+            q = deepcopy(mmove.move_data[1])
+            self.default_NE_withdrawal_operation(q[0],q[1])
+            return
+        else:
+            assert False
+        return
+
+    def default_NE_addition_operation(self,node_additions,edge_additions): 
+        qx = self.rg.ne_extremum()
+        r = min([qx[0][0],qx[0][1],qx[1][0],qx[1][1]])
+        
+        # iterate through node_additions and add
+        for n in node_additions:
+            self.rg.add_node([n,r])
+            self.excess -= r 
+
+        for n in edge_additions:
+            self.rg.add_edge(n,r)
+            self.excess -= r 
+        return
+
+    def default_NE_withdrawal_operation(self,node_set,edge_set):
+
+        for n in node_set:
+            v = self.rg.node_health_map[n]
+            self.rg.delete_node(n)
+            self.excess += v
+
+        while len(edge_set) > 0: 
+            x = edge_set.pop() 
+
+            if x not in self.rg.edges_health_map:
+                continue
+            # delete the edge
+            v = self.rg.edges_health_map[x]
+            self.rg.delete_edge(x)
+            self.excess += v
+
+            # delete the complement
+            q = x.split(",")
+            x2 = q[1] + "," + q[0]
+            self.rg.delete_edge(x2)
+            if x2 in self.rg.edges_health_map:
+                edge_set = edge_set - {x2}
+        return
+
+    #############################################################
+
+    def register_NMove(self,nmove,target_player):
+        assert nmove.destination_player == target_player.pidn
+        for x in nmove.chipinfo_seq:
+            self.register_chip(target_player,\
+                (nmove.is_nego,self.pidn,\
+                    x[1],x[2]))
+        return
+
+    """
+    args := (is_nego,owner,loc,neg_type)
+    """
+    def register_chip(self,target_player,args):
+        c = self.args_to_chip(args)
+        if args[0]:
+            target_player.nc.add_chip(c)
+        else:
+            target_player.nc.remove_chip(c)
+        return
+    
+    """
+    args := (is_nego,owner,loc,neg_type)
+    """
+    def args_to_chip(self,args):
+        x = None
+        if args[0]:
+            x = NegoChip(args[1],args[3],DEFAULT_NEGOCHIP_MULTIPLIER,args[2])
+        else:
+            x = NegaChip(args[1],args[3],args[2])
+        return x
 
     #############################################################
 

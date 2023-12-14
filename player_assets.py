@@ -1,6 +1,6 @@
 from rules import *
 
-MMOVE_TYPES = {"withdraw","add n.e.","make move"}
+MMOVE_TYPES = {"MInfo#1","MInfo#2","MInfo#3"}
 
 def merge_dictionaries__additive(dseq):
     if len(dseq) == 0:
@@ -390,14 +390,16 @@ class MMove:
         return 
 
     def check_data(self):
-        if self.move_type in {"withdraw","add n.e"}:
-            assert len(self.move_data) == 2 
-            assert type(self.move_data[0]) == type(self.move_data[1])
-            assert type(self.move_data[0]) == set
+        if self.move_type == "MInfo#1":
+            assert len(self.move_data) == 2
+            assert type(self.move_data[0]) == str
+            assert len(self.move_data[1]) == 3
+        elif self.move_type == "MInfo#2":
+            assert len(self.move_data) == 2
+            assert len(self.move_data[0]) == len(self.move_data[1])
+            assert len(self.move_data[0]) == 2
         else:
-            assert type(self.move_data[0]) == list
-            assert type(self.move_data[1]) == tuple
-            assert len(self.move_data[1]) == 2
+            assert False, "not yet coded"
         return
 
 
@@ -897,13 +899,13 @@ class DefInt:
             q = nd[k]
             if q == 0: q = 1
             self.node_hit_survival_rate[k] = \
-                round(abs(self.node_hit_survival_rate[k] / q))
+                round(abs(v / q))
 
         for (k,v) in rg.edges_health_map.items():
             q = ed[k]
             if q == 0: q = 1
             self.edge_hit_survival_rate[k] = \
-                round(abs(self.edge_hit_survival_rate[k] / q))
+                round(abs(v / q))
         return
     
     """

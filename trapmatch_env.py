@@ -55,6 +55,11 @@ class TMEnv:
             players.append(p)
         return TMEnv(players,game_modes[0],game_modes[1],farse_mach) 
 
+    def idn_to_player(self,idn):
+        for x in self.players:
+            if x.pidn == idn: return x
+        return None
+
     """
     moves one timestamp by a random ordering of the Players
     in the game. 
@@ -205,14 +210,25 @@ class TMEnv:
         self.players[player_index].postmove_update()
         return
 
+    # TODO: test 
     def exec_AMove(self,player_index,amove:AMove):
-        return -1
+        f = 0.
+        for (i,x) in enumerate(self.players):
+            if i == player_index: continue
+            f += x.register_AMove_hit(amove)
+        self.players[i].register_AMove(amove,f)
+        return
 
+    # TODO: test 
     def exec_MMove(self,player_index,mmove:MMove):
-        return -1 
+        self.players[player_index].register_MMove(mmove)
+        return
 
+    # TODO: test 
     def exec_NMove(self,player_index,nmove:NMove):
-        return -1 
+        px = self.idn_to_player(nmove.destination_player)
+        self.players[player_index].register_NMove(nmove,px) 
+        return
 
     def remove_deceased_player(self):
         return -1 
