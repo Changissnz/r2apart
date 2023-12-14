@@ -208,7 +208,8 @@ class PContext:
     def std_dec_func_MInfo_proc(self,sdf):
         amp1,amp2 = self.format_MMove_data()
         q = {}
-        q["MInfo#1"] = sdf.output(amp1,"MInfo#1")
+        for (k,v) in amp1.items():
+            q["MInfo#1-" + k] = sdf.output(v,"MInfo#1")
         q["MInfo#2"] = sdf.output(amp2,"MInfo#2")
         return q
 
@@ -309,8 +310,8 @@ class PContext:
     - s5 := [0] (min hit survival, max hit survival), AMove [25-percentile]
             [1] (min hit survival, max hit survival), AMove [75-percentile]
     """
-    def load_AMove_info(self,s1,s2,s3,s4,s5):
-        self.amove_prediction = AInfo(s1,s2,s3,s4,s5)
+    def load_AMove_info(self,s1,s2,s3,s4,s5,am1,am2):
+        self.amove_prediction = AInfo(s1,s2,s3,s4,s5,am1,am2)
         return
 
     def load_MMove_info(self, x:MInfo):
@@ -585,7 +586,7 @@ class PDEC:
         s51 = self.amove_hitsurvivalrate__on_self(owner,am2) 
         s5 = ((s50,am1),(s51,am2))
 
-        self.pcontext.load_AMove_info(s1,s2,s3,s4,s5)
+        self.pcontext.load_AMove_info(s1,s2,s3,s4,s5,am1,am2)
         return
 
     def amove_hitsurvivalrate__on_self(self,owner,am:AMove):
@@ -1398,6 +1399,35 @@ class Player:
         if len(pcd.ranking) == 0:
             return None
         x = pcd.ranking[0]
+        return x 
+
+    """
+    rd := (str,float), see description for method `PContextDecision.to_one_vec`
+    
+    return:
+    - if PMove, its index,
+      otherwise, one of (A|M|N)Move
+    """
+    def parse_rank_decision(self,rd):
+        if "PInfo" in rd[0]:
+            q = rd[0].split("-")
+            assert len(q) == 2
+            i = self.pmove_idn_to_index(q[1])
+            return i 
+        elif "AInfo" in rd[0]:
+            x = self.amove_prediction.am1 if rd[0] == "AInfo#1" else \
+                self.amove_prediction.am2
+            return x
+        elif "MInfo" in rd[0]:
+            # TODO: ?extend mmove_predicton to three #'s?
+            x = self.mmove_prediction.to_MMove()
+        elif "NInfo" in rd[0]:
+            q = rd[0].split("-")
+            assert len(q) == 2
+            i = int(q[1])
+            x = self.nmove_prediction[i].to_NMove()
+        else:
+            assert False
         return x 
 
     """

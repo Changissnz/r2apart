@@ -371,9 +371,15 @@ class PInfo:
 # -  instructions for adding nodes and edges to fulfill an additional
 #    isomorphism of one of the owner's default moves. 
 #   * set(additional nodes), set(additional edges)
+# X X X X TODO: 
 # -  instructions for creating a new move according to a default
 #    combinative addition scheme between two or three moves.
 #   * list(AMoves)
+#
+#  arguments for each MMove type
+# - #1: "add n.e": (move idn, (c1,c2,c3))
+# - #2: "withdraw": (1-hit nodes, 1-hit edges), (2-hit nodes, 2-hit edges)
+# - #3: "make move": <iterable::(move idn)>
 class MMove:
 
     def __init__(self,move_type,move_data):
@@ -393,6 +399,7 @@ class MMove:
             assert type(self.move_data[1]) == tuple
             assert len(self.move_data[1]) == 2
         return
+
 
 class MInfo:
 
@@ -436,20 +443,25 @@ class MInfo:
         return x1,x2
 
     def std_condense(self):
-        c1,c2,c3 = [],[],[]
-        for v in self.msd.values():
-            c1.append(v[0])
-            c2.append(v[1])
-            c3.append(v[2])
-        q1 = mean_safe_division(c1)
-        q2 = mean_safe_division(c2)
-        q3 = mean_safe_division(c3)
-        
-        x1 = [q1,q2,q3]
         x2 = [len(self.ne1[0]),len(self.ne1[1]),\
             len(self.ne2[0]),len(self.ne2[1]),deepcopy(self.mhsr)]
-        return x1,x2
-        
+        return deepcopy(self.msd),x2
+
+    def to_MMove(self,mmove_type):
+        assert "MInfo#1" in mmove_type or "MInfo#2" in mmove_type
+        md = None
+        mt = None
+        if "MInfo#1" in mmove_type:
+            q = mmove_type.split("-")
+            assert len(q) == 2
+            assert q[1] in self.msd
+            md = (q[1],self.msd[q[1]])
+            mt = "MInfo#1"
+        else:
+            md = (deepcopy(self.msd1),deepcopy(self.msd2))
+            mt = "MInfo#2"
+        return MMove(md,mt)
+
 ######################################################################################
 
 class AMove:
@@ -467,12 +479,15 @@ class AInfo:
         assert type(s1) == defaultdict
         assert type(s4) == defaultdict
         assert len(s5) == 2
+        assert type(am1) == AMove and type(am1) == type(am2)
 
         self.s1 = s1
         self.s2 = s2
         self.s3 = s3
         self.s4 = s4
         self.s5 = s5
+        self.am1 = am1
+        self.am2 = am2
 
     def __str__(self):
         s = "\texpected losses" + "\n"
@@ -571,6 +586,9 @@ class NInfo:
         x1.append(x)
         return x1
 
+    def to_NMove(self):
+        return NMove(self.is_nego,self.destination_player,self.chipinfo_seq)
+
 #######################################################################################
 
 STD_DEC_WEIGHT_INDEXSIZE_MAP = {"PInfo":(0,11),\
@@ -634,6 +652,8 @@ class StdDecFunction:
     def adjust(self):
         return -1
 
+####################################################
+
 class PContextDecision:
 
     def __init__(self,pproc,aproc,mproc,nproc):
@@ -657,15 +677,19 @@ class PContextDecision:
         return deepcopy(self.ranking)
 
     """
-    return:
-
+    - return:
+    vector of move descriptors; each element is one of
+    * PInfo-`pmove idn`, float
+    * AInfo`(#1|#2)`,float
+    * MInfo`(#1|#2)`,float
+    * NInfo-`nmove index`,float
     """
     def to_one_vec(self):
         q = []
-        q.extend([("PMove-" + k,v) for (k,v) in self.pproc.items()])
+        q.extend([("PInfo-" + k,v) for (k,v) in self.pproc.items()])
         q.extend([(k,v) for (k,v) in self.aproc.items()])
         q.extend([(k,v) for (k,v) in self.mproc.items()])
-        q.extend([("NMove-" + str(i),v) for (i,v) in enumerate(self.nproc)])
+        q.extend([("NInfo-" + str(i),v) for (i,v) in enumerate(self.nproc)])
         return q
 
 ########################################################################################

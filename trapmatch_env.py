@@ -69,10 +69,13 @@ class TMEnv:
     """
     """
     def move_one_player(self,p_index:int):
+        # feed player info
         self.feed_moving_player_info(p_index)
         
-        # player decision is in 
-        #self.players[p_index].move_one() 
+        # allow player to decide
+        mi = self.players[p_index].choose()
+
+        # TODO: execute player decision
         return -1
 
     """
@@ -201,6 +204,15 @@ class TMEnv:
         # update the hit survival rate for the player
         self.players[player_index].postmove_update()
         return
+
+    def exec_AMove(self,player_index,amove:AMove):
+        return -1
+
+    def exec_MMove(self,player_index,mmove:MMove):
+        return -1 
+
+    def exec_NMove(self,player_index,nmove:NMove):
+        return -1 
 
     def remove_deceased_player(self):
         return -1 
