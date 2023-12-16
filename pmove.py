@@ -291,7 +291,7 @@ class MicroGraphAssemblySolution:
     """
     wm := wanted move
     """
-    def __init__(self,wm):##,mg = None,ai=None):
+    def __init__(self,wm):
         assert type(wm) == PMove
         self.wm = wm
 
@@ -384,7 +384,6 @@ class MoveAssemblerType1:
 
         stat1 = MicroGraph.from_ResourceGraph(self.wanted_move.payoff_target).sub_ve_score(q1)
         stat2 = MicroGraph.from_ResourceGraph(self.wanted_move.antipayoff_target).sub_ve_score(q2)
-        ##print("stat score: ", stat1,stat2)
         return stat1[0] + stat1[1] != 0,stat2[0] + stat2[1] != 0 
 
     def assemble(self):
@@ -398,7 +397,6 @@ class MoveAssemblerType1:
     def full_move_assembly(self):
         def output_stat():
             s1,s2 = self.assembly_status()
-            ##print("SX ",s1,s2) 
             return s1 and s2
 
         print("-- full move assembly")
@@ -406,12 +404,10 @@ class MoveAssemblerType1:
         stat = output_stat()
         while stat:
             q = self.full_move_add()
-            ##print("-----//-----//-----//-----//")
             stat = output_stat()
             stat = False if q == -1 else stat 
             c += 1
         print("# moves: ", c)
-        ##self.counts[0] = deepcopy(c)
         return
 
     def full_move_add(self):
@@ -437,7 +433,6 @@ class MoveAssemblerType1:
         # update with the best add
         if type(best_move) == type(None): 
             return -1
-        ##print("best soln: {}|{}".format(best_move_soln_target[2], best_move_soln_antitarget[2]))
         self.mas.update__add(best_move,[best_move_soln_target[0],best_move_soln_target[1]],\
             [best_move_soln_antitarget[0],best_move_soln_antitarget[1]])
         self.counts[0] += 1
@@ -459,9 +454,7 @@ class MoveAssemblerType1:
                 stat = False
                 self.success = False
             c += 1
-            ##print("c: ", c)
         print("# moves: ",c)
-        ##self.counts[1] = deepcopy(c)
         return
 
     # NOTE: can refactor!

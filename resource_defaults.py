@@ -217,8 +217,6 @@ class GCSContainer:
         return nc + ec 
 
     def improve_search_candidate(self,candidate):
-        ##print("IMPROVEMENT")
-        ##print("[0]")
         # case: no more nodes in component
         if len(candidate[2]) == 0:
             return candidate

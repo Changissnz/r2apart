@@ -42,6 +42,8 @@ def dict_subtraction(d1,d2):
 
 def std_linear_combination(wx,sample):
     ls = len(sample)
+
+
     assert ls > 0
     assert len(wx) - 1 == len(sample)
     q = 0
@@ -262,26 +264,15 @@ class PMove:
     def suggested_additions_on_RG(self,isomap:defaultdict,partial_mg:MicroGraph,\
         is_target:bool,nic:DefaultNodeIdnCounter):
         
-        ##print("SUGGESTIA")
-
         # minus partial from
         pt = self.payoff_target if is_target else self.antipayoff_target 
         q1,q2 = pt.alt_subtract(partial_mg) 
         
-        ### 
-        ##print("+ NODES")
-        ##print(q1)
-        ##print("+ EDGES")
-        ##print(q2)
-        ##print()
-        ###
-
         # add the additional nodes
             # payoff graph node -> resource graph identifier
         nm = defaultdict(str) 
         for q in q1:
             nid = next(nic)
-            ##print("PARITY: ", nid, q)
             nm[nid] = q
         
         nm2 = deepcopy(nm)
@@ -383,7 +374,7 @@ class PInfo:
 class MMove:
 
     def __init__(self,move_type,move_data):
-        assert move_type in MMOVE_TYPES 
+        assert move_type in MMOVE_TYPES, "move type {} invalid".format(move_type)
         self.move_type = move_type
         self.move_data = move_data
         self.check_data()
@@ -416,15 +407,15 @@ class MInfo:
         assert type(mmove_score_dict) == defaultdict
         assert len(ne1) == len(ne2)
         assert len(ne1) == 2
-        self.msd = msd
+        self.msd = mmove_score_dict
         self.ne1 = ne1
         self.ne2 = ne2
         self.mhsr = mhsr
 
     def __str__(self):
-        s = str(mmove_score_dict) + "\n\n" + str(self.ne1) +\
+        s = str(self.msd) + "\n\n" + str(self.ne1) +\
             "\n\n" + str(self.ne2) + "\n* min hit: " +\
-                self.mhsr + "\n\n"
+                str(self.mhsr) + "\n\n"
         return s
 
     """
@@ -462,7 +453,7 @@ class MInfo:
         else:
             md = (deepcopy(self.msd1),deepcopy(self.msd2))
             mt = "MInfo#2"
-        return MMove(md,mt)
+        return MMove(mt,md)
 
 ######################################################################################
 
@@ -640,11 +631,11 @@ class StdDecFunction:
 
     """
     rcm_vec := reduced-condensed vector repr. of move
-    move_type := str, key in STD_DEC_WEIGHT_INDEX_MAP
+    move_type := str, key in STD_DEC_WEIGHT_INDEXSIZE_MAP
     """
     def output(self,rcm_vec,move_type):
-        assert move_type in STD_DEC_WEIGHT_INDEX_MAP
-        i = STD_DEC_WEIGHT_INDEX_MAP[condensed_move_type][0]
+        assert move_type in STD_DEC_WEIGHT_INDEXSIZE_MAP
+        i = STD_DEC_WEIGHT_INDEXSIZE_MAP[move_type][0]
         wgts = self.weights[i]
         return std_linear_combination(wgts,rcm_vec)
 
@@ -673,9 +664,12 @@ class PContextDecision:
         self.nproc = nproc
         self.ranking = None
 
-    def rank(self):
+    def rank(self,verbose):
         q = self.to_one_vec()
         self.ranking = sorted(q,key=lambda x:x[1],reverse=True)
+        if verbose: 
+            print("-- ranking of choices")
+            print(self.ranking)
         return deepcopy(self.ranking)
 
     """
@@ -813,6 +807,9 @@ class DefInt:
     def add_sample(self,player_idn,node_delta,edge_delta):
         self.player_idns = self.player_idns | {player_idn}
         for (k,v) in node_delta.items():
+            if player_idn not in self.node_delta[k]:
+                self.node_delta[k][player_idn] = [] 
+
             self.node_delta[k][player_idn].append(v)
             x = len(self.node_delta[k][player_idn]) - self.mem_size
             if x > 0:
@@ -820,6 +817,8 @@ class DefInt:
                     self.node_delta[k][player_idn][x:] 
         
         for (k,v) in edge_delta.items():
+            if player_idn not in self.edge_delta[k]:
+                self.edge_delta[k][player_idn] = []
             self.edge_delta[k][player_idn].append(v)
             x = len(self.edge_delta[k][player_idn]) - self.mem_size
             if x > 0:

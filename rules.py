@@ -92,19 +92,30 @@ node -> NegoChip type
 def negochip_locations__simple_deduction(ea_node_map,is_self):
     suspected_node_classifications = {}
     for (k,v) in ea_node_map.items():
+        ##
+        """
+        print("K: ",k)
+        print("V: ",v)
+        print()
+        """
+        ##
         q = classify_node_by_ea_pair(v,is_self)
         if q != "noneg":
             suspected_node_classifications[k] = q 
+    ##
+    """
     print("SUSPECTED NODE CLASSIFICATIONS")
     print(suspected_node_classifications)
+    """
+    ##
     return suspected_node_classifications
 
 """
 - return:
 noneg|nego-distort|nego-deception
 """
-def classify_node_by_ea_pair(self,ea_pair,is_self):
-    print("DIFF: ", ea_pair)
+def classify_node_by_ea_pair(ea_pair,is_self):
+    ##print("DIFF: ", ea_pair)
     if abs(ea_pair[0] - ea_pair[1]) < 3:
         return "noneg"
 

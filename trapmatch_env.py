@@ -73,15 +73,17 @@ class TMEnv:
 
     """
     """
-    def move_one_player(self,p_index:int):
+    def move_one_player(self,p_index:int,mi = None):
         # feed player info
         self.feed_moving_player_info(p_index)
-        
-        # allow player to decide
-        mi = self.players[p_index].choose()
 
-        # TODO: execute player decision
-        return -1
+        # case: allow player to decide
+        if type(mi) == type(None):
+            mi = self.players[p_index].choose()
+        self.exec_player_choice(p_index,mi)
+
+        if self.verbose: print("====================================")
+        return
 
     """
     iterates through and feed the player info.
@@ -89,7 +91,7 @@ class TMEnv:
     """
     def feed_moving_player_info(self,p_index:int):
         # calculate PMove info
-        if self.verbose: print("^ Gauging PMoves for player {}".format(self.players[p_index].idn))
+        if self.verbose: print("\t * GAUGING PMOVES FOR PLAYER {}".format(self.players[p_index].idn))
         self.all_pmove_AND_player_combos(p_index)
 
         # calculate AMove info
@@ -177,15 +179,34 @@ class TMEnv:
 
     #####################################
 
+    def exec_player_choice(self,player_index,c):
+        # case: PMove
+        print("CHOISHA: ")
+        print(c)
+        x = self.players[player_index].parse_rank_decision(c)
+
+        if "PInfo" in c[0]:
+            self.exec_PMove(player_index,x)
+        elif "AInfo" in c[0]:
+            self.exec_AMove(player_index,x)
+        elif "MInfo" in c[0]:
+            self.exec_MMove(player_index,x)
+        elif "NInfo" in c[0]:
+            self.exec_NMove(player_index,x)
+        else:
+            assert False 
+        return
+
     # TODO: test
     def exec_PMove(self,player_index,pmove_index):
         # register the PMove onto self
         rg = self.players[player_index].rg
-        pmove = self.players[player_index].ps[pmove_index]
+        pmove = self.players[player_index].ms[pmove_index]
         edn,ede,at,nr = self.players[player_index].pdec.payoff_info_(\
             rg,pmove,True)
-        dn,de = self.players[player_index].pdec.bm_negochips_transform(\
-            pmove_index,edn,ede,rg)
+        dn,de = self.players[player_index].pdec.actual_negochips_distorttransform(\
+            edn,ede) 
+            #pmove_index,edn,ede,rg)
         self.players[player_index].register_PMove(pmove_index,edn,ede,dn,de)
 
         # register the PMove onto all other active players
@@ -193,10 +214,12 @@ class TMEnv:
         idn = self.players[player_index].idn
         for i in range(len(self.players)):
             if i == player_index: continue
-            neap,eeap,pmgx = self.players[i].register_PMove_hit(idn,pmove,\
-                record_mgx)
+            #     def register_PMove_hit(self,attacker,pmove,record_mg=False):
+
+            neap,eeap,pmgx = self.players[i].register_PMove_hit(self.players[player_index],\
+                pmove,record_mgx)
             self.players[player_index].register_PMove_anti(\
-                pmove_index,p_idn,neap,eeap)
+                pmove_index,self.players[i].idn,neap,eeap)
 
             # update the PKDB if pmove_index in {2,3}
             if record_mgx:
@@ -231,4 +254,4 @@ class TMEnv:
         return
 
     def remove_deceased_player(self):
-        return -1 
+        return

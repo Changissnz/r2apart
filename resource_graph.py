@@ -44,21 +44,15 @@ def ve_fitscore_type1(G,G_):
     assert type(G) == MicroGraph
 
     # positive ve score
-    ## vs1 =  G - G_
     vs1 = G.sub_ve_score(G_)
-    ##print("VS1: ", vs1) 
 
     # negative ve score
-    ##vs2 = G_ - G 
     vs2 = G_.sub_ve_score(G) 
-    ##print("VS2: ", vs2)
-
     return (vs1[0] + vs1[1]) + (vs2[0] + vs2[1])
 
 # max function: negative v/e score 
 def ve_fitscore_type2(G,G_):
     # negative ve score
-    ##vs = G_ - G 
     vs = G.sub_ve_score(G_) 
     return (vs[0] + vs[1])
 
@@ -206,7 +200,7 @@ def rg_score_assignment_type_deception__default(rg_ref,rg_dec):
 
     # assign rg_dec node health values
     for k in rg_dec.node_health_map.keys():
-        rg_dec[k] = rg_ref[k]
+        rg_dec.node_health_map[k] = rg_ref.node_health_map[k]
 
     # get the mean edge-health for each node
     meh = defaultdict(float)
@@ -889,7 +883,6 @@ class ResourceGraph:
 
         # perform sub. op.
         e1,additional_edges = wanted_graph.alt_subtract(mgx)
-        ##assert len(e1) == 0, "got {}".format(e1)
         return additional_nodes,additional_edges
 
     ## TODO: 

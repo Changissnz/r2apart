@@ -64,15 +64,12 @@ return:
 def mmove_addition_selection__type_1(mmove_addition_dict,mmove_payoff_dict,\
     minumum_node_health,minumum_edge_health,minimal_hit_survival_rate):
 
-    assert type(rg) == ResourceGraph
-
     # get the node+,edge+ intersection 
     nas = [deepcopy(v) for v in mmove_addition_dict.values()]
     int1,int2 = ne_intersection(nas)
 
     mmove_scores = defaultdict(None)
     ks = [k for k in mmove_addition_dict.keys()]
-    
     for k in ks:
         score = mmove_addition_score_move__type_1(mmove_addition_dict,k,mmove_payoff_dict[k],\
             (int1,int2),minimal_hit_survival_rate,minumum_node_health,minumum_edge_health)
@@ -146,9 +143,20 @@ class PContext:
 
     def player_MMove_gauge(self,pidn):
         d = defaultdict(None)
+            ####
+        """
+        print("PMOVE PRED")
         for (k,v) in self.pmove_prediction.items():
-            x = v[pidn]
-            d[k] = deepcopy(self.ne_additions)
+            print("K: ",k)
+            print(v)
+            print()
+        print("--------------------")
+        """
+            ####
+        for (k,v) in self.pmove_prediction.items():
+            #print("K: ",k)
+            #print("TYPE: ", type(v))
+            d[k] = deepcopy(v[pidn].ne_additions)
         return d
 
     def condensed_form(self,reduced_form:bool):
@@ -177,40 +185,73 @@ class PContext:
 
     ###### processor for decision function
 
-    def std_dec_func_proc(self,sdf):
+    def std_dec_func_proc(self,sdf,verbose=False):
         pproc = self.std_dec_func_PInfo_proc(sdf)
         aproc = self.std_dec_func_AInfo_proc(sdf)
         mproc = self.std_dec_func_MInfo_proc(sdf)
         nproc = self.std_dec_func_NInfo_proc(sdf)
 
+        ##
+        """
+        print("PPROC")
+        print(pproc)
+        print("APROC")
+        print(aproc)
+        print("MPROC")
+        print(mproc)
+        print("NPROC")
+        print(nproc)
+        """
+        ##
+
         pcd = PContextDecision(pproc,aproc,mproc,nproc)
-        pcd.rank()
+        pcd.rank(verbose)
         return pcd
 
     """
+    - return:
+    move idn -> float value 
     """
     def std_dec_func_PInfo_proc(self,sdf):
         fpd = self.format_PMove_data()
+
         q = {}
         for (k,v) in fpd.items():
             q[k] = sdf.output(v,"PInfo")
         return q
 
+    """
+    - return:
+    AInfo`(#1|#2)` -> float value 
+    """
     def std_dec_func_AInfo_proc(self,sdf):
         amp1,amp2 = self.format_AMove_data()
+
         q = {}
-        q["AInfo#1"] = sdf.output(amp1,"AInfo#1")
-        q["AInfo#2"] = sdf.output(amp2,"AInfo#2")
+        if type(amp1) != type(None):
+            q["AInfo#1"] = sdf.output(amp1,"AInfo#1")
+        if type(amp2) != type(None):
+            q["AInfo#2"] = sdf.output(amp2,"AInfo#2")
         return q
 
+    """
+    - return:
+    MInfo`(#1|#2)` -> float value
+    """
     def std_dec_func_MInfo_proc(self,sdf):
         amp1,amp2 = self.format_MMove_data()
         q = {}
-        for (k,v) in amp1.items():
-            q["MInfo#1-" + k] = sdf.output(v,"MInfo#1")
-        q["MInfo#2"] = sdf.output(amp2,"MInfo#2")
+        if type(amp1) != type(None):
+            for (k,v) in amp1.items():
+                q["MInfo#1-" + k] = sdf.output(v,"MInfo#1")
+        if type(amp2) != type(None):
+            q["MInfo#2"] = sdf.output(amp2,"MInfo#2")
         return q
 
+    """
+    - return:
+
+    """
     def std_dec_func_NInfo_proc(self,sdf):
         q = []
         vc = self.format_NMove_data()
@@ -239,11 +280,14 @@ class PContext:
 
     def format_AMove_data(self):
         if type(self.amove_prediction) == type(None):
-            return None
+            return None,None 
         amp1,amp2 = self.amove_prediction.std_condense()
         return amp1,amp2
 
     def format_MMove_data(self):
+        if type(self.mmove_prediction) == type(None):
+            return None,None 
+
         x1,x2 = self.mmove_prediction.std_condense()
         return x1,x2 
 
@@ -279,8 +323,6 @@ class PContext:
             """
             return
 
-        ##print("LENS:")
-        ##print(len(dn),len(de),len(si),len(nr))
         c = max(nr.values())  
         p = mv.payoff if is_target else mv.antipayoff
         x1,x2 = potency_default_cumulative_function(player,dn,de,c,p)
@@ -723,7 +765,7 @@ class PDEC:
             return 
 
         q2 = self.mmove_withdrawal_candidates()
-        mhsr = self.def_int.minimal_hit_survival_rate()
+        mhsr = min(self.def_int.minimal_hit_survival_rate())
         mds = MInfo(q,(q2[0],q2[1]),(q2[2],q2[3]),mhsr) 
         self.pcontext.load_MMove_info(mds)
         return
@@ -936,14 +978,15 @@ class Player:
         # player's idn
         self.idn = idn
         # excess resources
-        self.excess_resources = excess 
+        self.excess = excess 
 
         # the context mapper, used for learning
         assert type(pcontext_mapper) in {type(None),type(PContextMapper)}
         if type(pcontext_mapper) == type(None):
-            self.pcontext_mapper = PContextMapper(StdDecFunction())
-        else:
-            self.pcontext_mapper = pcontext_mapper
+            pcontext_mapper = PContextMapper(StdDecFunction())
+        ##else:
+        ##    self.pcontext_mapper = pcontext_mapper
+        
         # player decision struct, used to store relevant information to make
         # decisions
         self.pdec = PDEC(idn,pcontext_mapper)
@@ -1049,23 +1092,24 @@ class Player:
     - Player, dummy visual
     """
     def project_out(self):
-        chips = self.active_chips_by_info(self.idn,"deception")
+        chips = self.nc.active_chips_by_info(self.idn,"deception")
         cx = [c.loc for c in chips]
         rgx = self.rg.deception_complement(cx)
-        return Player(rgx,None,self.idn,0)
+        return rgx 
+        ##return Player(rgx,None,self.idn,0)
 
     def one_gauge_PMove(self,p,move_index:int):
         assert type(p) == Player
-        if self.verbose: print("* gauging PMove {} on player {}".format(self.ms[move_index].pm_idn,p.idn))
+        if self.verbose: print("* gauging: PMove {} on player {}".format(self.ms[move_index].pm_idn,p.idn))
         self.pdec.gauge_pmove_payoff(p,deepcopy(self.ms[move_index]))
         return 
 
     def one_gauge_AMove(self,other_players):
-        if self.verbose: print("* gauging AMove")
+        if self.verbose: print("\t* GAUGING: AMove")
         self.pdec.gauge_amove_payoff(self,other_players)
 
     def one_gauge_MMove(self):
-        if self.verbose: print("* gauging MMove")
+        if self.verbose: print("\t* GAUGING: MMove")
 
         # get the minumum health
         mnh = min([v for v in self.rg.node_health_map.values()])
@@ -1077,7 +1121,7 @@ class Player:
         self.pdec.gauge_mmove_payoff(mnh,meh,mpd)
 
     def one_gauge_NMove(self,other_players):
-        if self.verbose: print("* gauging NMove")
+        if self.verbose: print("\t* GAUGING: NMove")
 
         l = int(round(len(self.rg.node_health_map) / 3))
 
@@ -1104,7 +1148,7 @@ class Player:
         pm_idn = self.ms[p_index].pm_idn
 
         # add the expected/actual maps to <DefInt>    
-        self.def_int.add_sample_ea(pm_idn,ea_nodes,ea_edges)
+        self.pdec.def_int.add_sample_ea(pm_idn,ea_nodes,ea_edges)
 
         return
 
@@ -1127,7 +1171,7 @@ class Player:
             self.pdec.suspected_negochips[player_idn] = qx
 
         # calculate suspected chips for self
-        nddata = deepcopy(self.pdec.def_int.ea_self_target_node)
+        nddata = deepcopy(self.pdec.def_int.ea_self_target_node[p_index])
         qx = negochip_locations__simple_deduction(nddata,True)
         self.pdec.suspected_negochips[self.idn] = qx
 
@@ -1135,7 +1179,7 @@ class Player:
     registers the effects of PMove on another player
     """
     def register_PMove_anti(self,pm_idn,p_idn,ea_ndm,ea_edm):
-        self.pdec.def_int.add_antisample(pm_idn,\
+        self.pdec.def_int.add_antisample(self.idn,pm_idn,\
             p_idn,ea_ndm,ea_edm)
         return
 
@@ -1163,14 +1207,14 @@ class Player:
 
         # calculate isomorphic attack on image
         self.iso_reg = rgx.subgraph_isomorphism(mgx,True)
-        ndm,edm,endm,eedm,pmgx = self.ne_delta_map_of_iso_reg(mgx,pmove.antipayoff,record_mg)
+        ndm,edm,endm,eedm,pmgx = self.ne_delta_map_of_iso_reg(rgx,mgx,pmove.antipayoff,record_mg)
         
         # log the deltas for self
         ndm_,edm_ = self.pdec.actual_negochips_distorttransform(ndm,edm)
         self.log_PMove_hit(attacker.idn,ndm_,edm_)
 
         # get the expected values by attacker
-        ndmq,edmq = attacker.predictive_negochips_distorttransform(self.idn,ndm,edm)
+        ndmq,edmq = attacker.pdec.predictive_negochips_distorttransform(self.idn,ndm,edm)
 
         # construct the output
         node_eapair,edge_eapair = defaultdict(None),defaultdict(None)
@@ -1187,7 +1231,7 @@ class Player:
           exist in the player's ResourceGraph due to <NegoChip.deception>
           instances.
     """
-    def ne_delta_map_of_iso_reg(self,mv_mgx,payoff,record_mg=False):
+    def ne_delta_map_of_iso_reg(self,rgx,mv_mgx,payoff,record_mg=False):
         node_dm = defaultdict(float)
         edge_dm = defaultdict(float) 
         exp_node_dm = defaultdict(float)
@@ -1197,7 +1241,7 @@ class Player:
         while len(self.iso_reg) > 0:
             x = self.iso_reg.pop(-1)
             si2 = pairseq_to_dict(x)
-            g2 = rg.isomap_to_isograph(deepcopy(mv_mgx),si2)
+            g2 = rgx.isomap_to_isograph(deepcopy(mv_mgx),si2)
             ndm,edm,endm,eedm = self.delta_of_iso(g2,payoff)
             node_dm = merge_dictionaries__additive([node_dm,ndm])
             edge_dm = merge_dictionaries__additive([edge_dm,edm])
@@ -1337,13 +1381,13 @@ class Player:
 
     def register_MMove(self,mmove):
 
-        if mmove.move_type == "MMove#1":
+        if mmove.move_type == "MInfo#1":
             # fetch the node and edge additions from PInfo
             pm_idn = mmove.move_data[0]
-            q = self.pdec.pcontext.pmove_prediction[pm_idn][self.pidn].ne_additions
+            q = self.pdec.pcontext.pmove_prediction[pm_idn][self.idn].ne_additions
             self.default_NE_addition_operation(q[0],q[1])
             return
-        elif mmove.move_type == "MMove#2":
+        elif mmove.move_type == "MInfo#2":
             q = deepcopy(mmove.move_data[0])
             self.default_NE_withdrawal_operation(q[0],q[1])
             q = deepcopy(mmove.move_data[1])
@@ -1552,11 +1596,12 @@ class Player:
     def choose(self):
         # dummy choice is PMove
         sdf = self.pdec.context_mapper.sdf
-        pcd = self.pdec.pcontext.std_dec_func_proc(sdf)
+        pcd = self.pdec.pcontext.std_dec_func_proc(sdf,self.verbose)
         if len(pcd.ranking) == 0:
             return None
+
         x = pcd.ranking[0]
-        return x 
+        return x
 
     """
     rd := (str,float), see description for method `PContextDecision.to_one_vec`
@@ -1572,17 +1617,17 @@ class Player:
             i = self.pmove_idn_to_index(q[1])
             return i 
         elif "AInfo" in rd[0]:
-            x = self.amove_prediction.am1 if rd[0] == "AInfo#1" else \
-                self.amove_prediction.am2
+            x = self.pdec.pcontext.amove_prediction.am1 if rd[0] == "AInfo#1" else \
+                self.pdec.pcontext.amove_prediction.am2
             return x
         elif "MInfo" in rd[0]:
             # TODO: ?extend mmove_predicton to three #'s?
-            x = self.mmove_prediction.to_MMove()
+            x = self.pdec.pcontext.mmove_prediction.to_MMove(rd[0])
         elif "NInfo" in rd[0]:
             q = rd[0].split("-")
             assert len(q) == 2
             i = int(q[1])
-            x = self.nmove_prediction[i].to_NMove()
+            x = self.pdec.pcontext.nmove_prediction[i].to_NMove()
         else:
             assert False
         return x 
