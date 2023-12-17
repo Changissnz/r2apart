@@ -128,8 +128,11 @@ class PContext:
         # iterable<NInfo> 
         self.nmove_prediction = []
 
-        # the decision that Player made
+        # the decision that Player made, type is ?Move
         self.selection = None
+        # descriptor for the selection
+        self.selection_descriptor = None 
+
         return 
 
     ###################### display and write methods
@@ -1611,25 +1614,29 @@ class Player:
       otherwise, one of (A|M|N)Move
     """
     def parse_rank_decision(self,rd):
+        x = None 
         if "PInfo" in rd[0]:
             q = rd[0].split("-")
             assert len(q) == 2
-            i = self.pmove_idn_to_index(q[1])
-            return i 
+            x = self.pmove_idn_to_index(q[1])
+            self.pdec.pcontext.selection = deepcopy(self.ms[x])
         elif "AInfo" in rd[0]:
             x = self.pdec.pcontext.amove_prediction.am1 if rd[0] == "AInfo#1" else \
                 self.pdec.pcontext.amove_prediction.am2
-            return x
+            self.pdec.pcontext.selection = deepcopy(x)
         elif "MInfo" in rd[0]:
             # TODO: ?extend mmove_predicton to three #'s?
             x = self.pdec.pcontext.mmove_prediction.to_MMove(rd[0])
+            self.pdec.pcontext.selection = deepcopy(x)
         elif "NInfo" in rd[0]:
             q = rd[0].split("-")
             assert len(q) == 2
             i = int(q[1])
             x = self.pdec.pcontext.nmove_prediction[i].to_NMove()
+            self.pdec.pcontext.selection = deepcopy(x)
         else:
             assert False
+        self.pdec.pcontext.selection_descriptor = deepcopy(rd[0])
         return x 
 
     """

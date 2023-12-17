@@ -194,7 +194,7 @@ class TMEnv:
         elif "NInfo" in c[0]:
             self.exec_NMove(player_index,x)
         else:
-            assert False 
+            assert False
         return
 
     # TODO: test
@@ -223,7 +223,7 @@ class TMEnv:
 
             # update the PKDB if pmove_index in {2,3}
             if record_mgx:
-                self.players[player_index].update_PKDB(pmgx)
+                self.players[player_index].update_PKDB(self.players[i].idn,pmgx)
 
         # conduct the post-analysis of the PMove to hypothesize on
         # negochip locations 
