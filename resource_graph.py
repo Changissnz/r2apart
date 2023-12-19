@@ -2,6 +2,7 @@ from collections import defaultdict,deque
 from copy import deepcopy
 import numpy as np
 import random
+import pickle
 
 def invert_simple_map(x):
     assert type(x) in {dict,defaultdict}

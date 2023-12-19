@@ -4,7 +4,7 @@ MMOVE_TYPES = {"MInfo#1","MInfo#2","MInfo#3"}
 
 def merge_dictionaries__additive(dseq):
     if len(dseq) == 0:
-        return None
+        return defaultdict(float)
 
     dx = deepcopy(dseq[0])
     for x in dseq[1:]:
@@ -89,6 +89,8 @@ def rank_stddict_floatvalues(d,reverse=False):
             r += 1 
             x = q[1]
         dranks[q[0]] = r
+    ##print("RANKINGSSS: ",dranks)
+
     return dranks
 
 ## functions used to condense the delta values of a PMove on a 
@@ -740,6 +742,52 @@ class DefInt:
         self.ea_self_target_edge = defaultdict(defaultdict)
         return
 
+    def remove_deceased_player(self,pidn):
+        self.node_delta = self.remove_deceased_player_from_PMove_dict(pidn,self.node_delta)
+        self.edge_delta = self.remove_deceased_player_from_PMove_dict(pidn,self.edge_delta)
+        self.pmove_playernode_recep = self.remove_deceased_player_from_PMove_dict(pidn,self.pmove_playernode_recep)
+        self.pmove_playeredge_recep = self.remove_deceased_player_from_PMove_dict(pidn,self.pmove_playeredge_recep)
+
+    def remove_deceased_player_from_PMove_dict(self,pidn,d):
+        for k in d.keys():
+            v = d[k]
+            if pidn in v:
+                del v[pidn]
+            d[k] = v
+        return d
+
+
+
+
+
+
+    def display(self):
+        print("-- node delta")
+        print(self.node_delta)
+        print()
+        print("-- edge delta")
+        print(self.edge_delta)
+        print()
+        print("-- node hit survival rate")
+        print(self.node_hit_survival_rate)
+        print()
+        print("-- edge hit survival rate")
+        print(self.edge_hit_survival_rate)
+        print()
+        print("-- pmove player node reception")
+        print(self.pmove_playernode_recep)
+        print()
+        print("-- pmove player edge reception")
+        print(self.pmove_playeredge_recep)
+        print()
+        print("-- pmove self node reception")
+        print(self.ea_self_target_node)
+        print()
+        print("-- pmove self edge reception")
+        print(self.ea_self_target_edge)
+        print()
+        return
+
     def cumulative_nOrE_delta__most_recent(self,x,is_node):
         q = self.node_delta if is_node else self.edge_delta
 
@@ -1073,7 +1121,8 @@ class PMLog:
     
     def add_artifact(self,artifact):
         if self.lt == "full context":
-            assert type(artifact) == PContext
+            ##assert type(artifact) == PContext
+            assert True 
         else:
             assert type(artifact) in {PMove,AMove,MMove,NMove}
         self.mh.append(artifact)
@@ -1097,3 +1146,11 @@ class PMLog:
     def most_recent_artifact__specific(self,artifact,i):
         q = self.mh[i]
         return artifact == q
+
+    def most_recent_PMove_gauge(self,pm_idn):
+        assert self.lt == "full context"
+        l = len(self.mh)
+        for i in range(l - 1,-1,-1):
+            if pm_idn in self.mh[i].pmove_prediction:
+                return i,deepcopy(self.mh[i].pmove_prediction[pm_idn])
+        return -1,None

@@ -109,8 +109,6 @@ def ne_intersection(ne_addition_seq):
         q1 = q1 & ne_addition_seq[i][1]
     return (q0,q1)
 
-######################################################
-
 """
 container that holds a player's context with respect to 
 all other players in a game.
@@ -321,9 +319,9 @@ class PContext:
 
         stat = len(nr) == 0 or len(dn) == 0
         if stat:
-            """
-            print("NADA")
-            """
+            
+            print("NADA for move {} of player {}".format(mv.pm_idn,player.idn))
+            
             return
 
         c = max(nr.values())  
@@ -362,9 +360,6 @@ class PContext:
         self.mmove_prediction = x
         return
 
-    def summarize_NMove(self,player): 
-        return -1
-
 class PContextMapper:
 
     def __init__(self,sdf:StdDecFunction,context_file=None):
@@ -387,6 +382,8 @@ class PContextMapper:
     """
     def write_context_cache(self):
         return -1
+
+########################################################################################
 
 """
 player decider; used by class<Player> as an utility in
@@ -436,6 +433,7 @@ class PDEC:
     def gauge_pmove_payoff(self,actor,pmove): 
         assert type(actor) == Player
         assert type(pmove) == PMove
+        print("ATTENTION: pmove {}".format(pmove.pm_idn))
 
         # initialize if new round
         if type(self.pcontext) == type(None):
@@ -1182,6 +1180,7 @@ class Player:
     registers the effects of PMove on another player
     """
     def register_PMove_anti(self,pm_idn,p_idn,ea_ndm,ea_edm):
+        print("REG PMOVE {} on {} by actor {}".format(pm_idn,p_idn,self.idn))
         self.pdec.def_int.add_antisample(self.idn,pm_idn,\
             p_idn,ea_ndm,ea_edm)
         return
@@ -1534,6 +1533,7 @@ class Player:
         print("* MRO")
         print(mro)
         print()
+        print("END PRIORITY CALC.")
         """
             ####
 
@@ -1545,6 +1545,14 @@ class Player:
         rx5 = rank_stddict_floatvalues(mro)
         q = merge_dictionaries__additive([rx1,rx2,rx3,\
             rx4,rx5])
+
+            ####
+        """
+        print("MERGEDQ: ")
+        print(q)
+        """
+            ####
+
         rx = rank_stddict_floatvalues(q)
         return rx
 
@@ -1639,6 +1647,21 @@ class Player:
         self.pdec.pcontext.selection_descriptor = deepcopy(rd[0])
         return x 
 
+    def record_into_pml(self):
+        assert type(self.pdec.pcontext.selection) != type(None)
+
+        if self.pml.lt == "full context":
+            self.pml.add_artifact(deepcopy(self.pdec.pcontext))
+        else:
+            self.pml.add_artifact(deepcopy(self.pdec.pcontext.selection))
+        return
+
+    def is_deceased(self):
+        return len(self.rg.node_health_map) == 0
+
+    def remove_deceased_player(self,idn):
+        self.pdec.def_int.remove_deceased_player(idn)
+
     """
     used for testing
     """
@@ -1649,7 +1672,3 @@ class Player:
     # TODO: add more
     def postmove_update(self):
         self.pdec.def_int.hit_survival_rate_hypothesis(self.rg)
-
-    # TODO: 
-    def apply_negachip(self):
-        return -1

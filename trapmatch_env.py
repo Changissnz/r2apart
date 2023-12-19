@@ -51,8 +51,9 @@ class TMEnv:
             rg_args.append(deepcopy(connectivity_range))
             rg_args.append(deepcopy(DEFAULT_NODE_HEALTH_RANGE))
             excess = random.randint(excess_range[0],excess_range[1])
-            p = Player.generate(i,str(j),nm,rg_args,excess,None)
-            players.append(p)
+            print("generating for {} with args {}".format(j,rg_args))
+            p = Player.generate(None,str(j),nm,rg_args,excess,None)
+            players.append(deepcopy(p))
         return TMEnv(players,game_modes[0],game_modes[1],farse_mach) 
 
     def idn_to_player(self,idn):
@@ -117,9 +118,14 @@ class TMEnv:
         # rank the priority of PMoves
         priorities = p.pmove_priorities()
         pseq = [(k,v) for (k,v) in priorities.items()]
+        print("XX: ", pseq)
+
         pseq = sorted(pseq,key=lambda x:x[1])
         pseq = pseq[:DEFAULT_PMOVE_MAX_GAUGES]
         
+        if self.verbose: 
+            print("player {} PMove gauges: {}".format(self.players[p_index].idn,pseq))
+
         # iterate through the highest ranking PMoves and
         # gauge them
         for x in pseq:
@@ -128,6 +134,21 @@ class TMEnv:
             assert mi != -1
             for px in self.players:
                 p.one_gauge_PMove(px,mi)
+
+        # infer remaining moves if PMLog mode `full context` is on
+        if p.pml.lt != "full context":
+            if self.verbose: print("no inference for rest of PMove gauges")
+            return
+
+        idn_mvs = set([x.pm_idn for x in p.ms])
+        q = set([x[0] for x in pseq])
+        idn_mvs = idn_mvs - q
+
+        for q in idn_mvs:
+            index,pmp = p.pml.most_recent_PMove_gauge(q)
+            if index == -1:
+                continue
+            p.pdec.pcontext.pmove_prediction[q] = pmp
         return
 
     # TODO: untested
@@ -195,6 +216,15 @@ class TMEnv:
             self.exec_NMove(player_index,x)
         else:
             assert False
+
+        # record player move into its log
+        self.players[player_index].record_into_pml()
+
+        # remove all deceased players from move
+        self.remove_deceased()
+
+        # run post-round calculations for remaining players
+        self.post_round_calculations()
         return
 
     # TODO: test
@@ -207,6 +237,14 @@ class TMEnv:
         dn,de = self.players[player_index].pdec.actual_negochips_distorttransform(\
             edn,ede) 
             #pmove_index,edn,ede,rg)
+        ###
+        """
+        print("EDE: register self pmove")
+        print(dn)
+        print()
+        print(de)
+        """
+        ###
         self.players[player_index].register_PMove(pmove_index,edn,ede,dn,de)
 
         # register the PMove onto all other active players
@@ -214,10 +252,20 @@ class TMEnv:
         idn = self.players[player_index].idn
         for i in range(len(self.players)):
             if i == player_index: continue
-            #     def register_PMove_hit(self,attacker,pmove,record_mg=False):
-
+        
             neap,eeap,pmgx = self.players[i].register_PMove_hit(self.players[player_index],\
                 pmove,record_mgx)
+                ###
+            """
+            print("REGISTER PMOVE HIT ON {}".format(self.players[i].idn))
+            print("NEAP")
+            print(neap)
+            print()
+            print("EEAP")
+            print(eeap)
+            print()
+            """
+                ###
             self.players[player_index].register_PMove_anti(\
                 pmove_index,self.players[i].idn,neap,eeap)
 
@@ -228,9 +276,6 @@ class TMEnv:
         # conduct the post-analysis of the PMove to hypothesize on
         # negochip locations 
         self.players[player_index].post_analysis_PMove__negochip_deduction(pmove_index)
-
-        # update the hit survival rate for the player
-        self.players[player_index].postmove_update()
         return
 
     # TODO: test 
@@ -253,5 +298,41 @@ class TMEnv:
         self.players[player_index].register_NMove(nmove,px) 
         return
 
-    def remove_deceased_player(self):
+    def post_round_calculations(self):
+        # update the hit survival rate for the player
+        for i in range(len(self.players)):
+            self.players[i].postmove_update()
+
+    def remove_deceased(self):
+        # idn's for deceased players
+        deceased_players = set()
+        deceased_player_indices = set()
+
+        # collect deceased players
+        for (i,x) in enumerate(self.players):
+            if x.is_deceased():
+                deceased_players |= {x.idn}
+                deceased_player_indices |= {i}
+
+        # remove deceased players
+        pxs = [p for (i,p) in enumerate(self.players) if i not in deceased_player_indices]
+        self.players = pxs
+
+        # remove information for all deceased players in
+        # each surviving player's infobase
+        for p in self.players:
+            for x in deceased_players:
+                p.remove_deceased_player(x)
         return
+
+    def save_state(self,fp,write_mode="wb"):
+        q = DEFAULT_TRAINING_FOLDER + fp
+        f = open(q,write_mode)
+        pickle.dump(self,f)
+
+    @staticmethod
+    def open_state(fp):
+        f = open(DEFAULT_TRAINING_FOLDER + fp,"rb")
+        q = pickle.load(f)
+        assert type(q) == TMEnv, "type {} is not <TMEnv>".format(type(q))
+        return q
