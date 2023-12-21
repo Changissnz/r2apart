@@ -21,9 +21,9 @@ that players are to gauge or execute PMoves.
 As a result of the expensive calculations
 revolving around the subgraph isomorphism
 problem, as evidenced by the long runtimes
-(around 40 minutes on a typical personal 
-computer for a game of three players in the 
-first timestamp, each with graph degrees 
+(around 40 minutes for the first timestamp 
+on a typical personal computer in a game of 
+three players, each with graph degrees 
 between 16 and 30), there is little
 practical motivation to continue development 
 of the game, `r2apart`, so that the game 
