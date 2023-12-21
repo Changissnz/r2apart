@@ -58,7 +58,7 @@ class TMEnv:
 
     def idn_to_player(self,idn):
         for x in self.players:
-            if x.pidn == idn: return x
+            if x.idn == idn: return x
         return None
 
     """

@@ -15,7 +15,6 @@ from trapmatch_env import *
 import time
 
 ### TEST CASE 1: <TMEnv>
-"""
 i = 81#4
 num_players = 3
 num_moves_range = (4,7)
@@ -31,9 +30,10 @@ tme = TMEnv.generate__type_dumb(i,num_players,num_moves_range,\
 ### demonstrate moving one timestamp
 t = time.time()
     ##
+
 tme.move_one_timestamp()
 tme.save_state(fp = "pickled_tme_state")
-\"""
+"""
 ### demonstrating executing a PMove by player 0
 \"""
 tme.feed_moving_player_info(0)
@@ -45,16 +45,45 @@ mv = qm.pop()
 print("executing move {} for player 0".format(mv))
 index = tme.players[0].pmove_idn_to_index(mv)
 tme.exec_PMove(0,index)
-\"""
 ###
+"""
 
 t2 = time.time()
 print("time: ", t2 - t) 
-"""
+
 ######################################################
 
 # loading a saved TMEnv
-tme = TMEnv.open_state("pickled_tme_state")
+"""
+tme = TMEnv.open_state("pickled_tme_state_1")
+tme.move_one_timestamp()
+tme.save_state(fp = "pickled_tme_state_2")
+"""
+##############################
+"""
+###############################
+# focus on player 1, PMove 3.
+px = tme.idn_to_player("1")
+q = px.pmove_idn_to_index("2")
+mv = px.ms[q]
+
+print("TARGET")
+print(mv.payoff_target)
+print("ANTITARGET")
+print(mv.antipayoff_target)
+    # try calculating the number of isomorphisms for 
+    # PMove 3, antitarget
+##mgpt = MicroGraph.from_ResourceGraph(mv.payoff_target)
+##mgat = MicroGraph.from_ResourceGraph(mv.antipayoff_target)
+##seq = px.rg.subgraph_isomorphism(mgpt,all_iso=True)
+##seq2 = px.rg.subgraph_isomorphism(mgat,all_iso=True)
+
+    # PMove 2, antitarget
+##mgpt = MicroGraph.from_ResourceGraph(mv.payoff_target)
+##mgat = MicroGraph.from_ResourceGraph(mv.antipayoff_target)
+##seq = px.rg.subgraph_isomorphism(mgpt,all_iso=True)
+##seq2 = px.rg.subgraph_isomorphism(mgat,all_iso=True)
+"""
 
 if __name__ == "__main__":
     print("Hello")

@@ -1538,12 +1538,12 @@ class Player:
             ####
 
         # rank the values for
-        rx1 = rank_stddict_floatvalues(mpself)
+        ##rx1 = rank_stddict_floatvalues(mpself)
         rx2 = rank_stddict_floatvalues(mpothers)
         rx3 = rank_stddict_floatvalues(eaself)
         rx4 = rank_stddict_floatvalues(eaothers)
         rx5 = rank_stddict_floatvalues(mro)
-        q = merge_dictionaries__additive([rx1,rx2,rx3,\
+        q = merge_dictionaries__additive([rx2,rx3,\
             rx4,rx5])
 
             ####

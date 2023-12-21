@@ -198,6 +198,8 @@ class PMove:
         mgrg = MicroGraph.from_ResourceGraph(q)#rg)
         si = rg.subgraph_isomorphism(mgrg,all_iso=True)#,include_extra=include_extras)
 
+        print("** gauge payoff seq produces {} isomorphisms".format(len(si)))
+
             ######
         """
         print("DONE COLLECTING ISOS")
@@ -225,7 +227,7 @@ class PMove:
             g2 = rg.isomap_to_isograph(deepcopy(mgrg),si2)
             delta_node,delta_edge,node_relevance = self.update_delta_map_for_move(\
                 delta_node,delta_edge,g2,node_relevance,is_target)
-
+        print("** finished accumulation of gauge on isomorphic attack")
         addit = None
         if is_target:
             qx = MicroGraph.from_ResourceGraph(q) 
