@@ -581,16 +581,11 @@ class ResourceGraph:
     @staticmethod
     def from_MicroGraph(mg,default_health=1):
         rg = ResourceGraph({},{})
-        ##print("micrograph")
-        ##print(mg.dg) 
-        ##print("-- from micro")
         for (k,v) in mg.dg.items():
             rg.node_health_map[k] = default_health
             for v_ in v:
                 es = k + "," + v_
-                ##print("adding edge ",es)
                 rg.edges_health_map[es] = default_health
-        ##print("done adding edges...")
         return rg 
 
     # pickle method
@@ -718,7 +713,7 @@ class ResourceGraph:
         list<dict, node self -> node other>
       otherwise: 
     """
-    def subgraph_isomorphism(self,mg,all_iso=False):#,include_extra=0):
+    def subgraph_isomorphism(self,mg,all_iso=False,size_limit=None):#,include_extra=0):
         search_candidates = []
         
         # get the initial candidates for each 
@@ -775,19 +770,15 @@ class ResourceGraph:
             if not all_iso and not stat2:
                 if len(candidate[1]) == 0:
                     return candidate[0] 
-            if not stat2:# or include_extra > 0:
-                """
-                if len(candidate[0]) != len(mg.dg):
-                    if include_extra > 0:
-                        results.append(candidate[0])
-                        include_extra -= 1
-                        stat = len(search_list) != 0
-                        continue 
-                """
+            if not stat2:
                 results.append(candidate[0])
                 stat = len(search_list) != 0
-                #include_extra -= 1
-                continue                
+                continue
+
+            if all_iso and type(size_limit) != type(None):
+                if len(results) >= size_limit:
+                    stat = False
+                    continue
 
             q = candidate[1].pop()
             # get neighbors of candidate in mg
@@ -811,21 +802,6 @@ class ResourceGraph:
                     cand1.append([qn,q])
                     search_list.appendleft([cand1,cand2])
                     c += 1
-
-            # add extra, and rank it in ascending order by score
-            """
-            if c == 0:## and include_extra > 0:
-                
-                candidate[1] |= {q} 
-                j = 0
-                for i in range(len(results_extra)):
-                    if len(results_extra[i][1]) > len(candidate[1]):
-                        j = i
-                results_extra.append(candidate[0])
-                results_extra = results_extra[:include_extra]
-                include_extra -= 1
-                #search_list.append(candidate)
-            """
 
             stat = len(search_list) != 0
         return results# + results_extra
@@ -923,10 +899,7 @@ class ResourceGraph:
             ncseq1_.pop(0)
             ncseq2_ = deepcopy(ncseq2)
             ncseq2_.remove(x)
-
-            ##print("[1] ",ncseq1_)
-            ##print("[2] ",ncseq2_)
-
+            
             scache.append([m,ncseq1_,ncseq2_])
 
         # build the cache until soln found

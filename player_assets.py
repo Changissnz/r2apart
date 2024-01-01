@@ -196,7 +196,7 @@ class PMove:
         q = deepcopy(self.payoff_target) if is_target else\
             deepcopy(self.antipayoff_target)
         mgrg = MicroGraph.from_ResourceGraph(q)#rg)
-        si = rg.subgraph_isomorphism(mgrg,all_iso=True)#,include_extra=include_extras)
+        si = rg.subgraph_isomorphism(mgrg,all_iso=True,size_limit=DEFAULT_ISOMORPHIC_ATTACK_SIZE)#,include_extra=include_extras)
 
         print("** gauge payoff seq produces {} isomorphisms".format(len(si)))
 

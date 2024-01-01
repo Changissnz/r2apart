@@ -1208,7 +1208,7 @@ class Player:
         mgx = MicroGraph.from_ResourceGraph(pmove.antipayoff_target)
 
         # calculate isomorphic attack on image
-        self.iso_reg = rgx.subgraph_isomorphism(mgx,True)
+        self.iso_reg = rgx.subgraph_isomorphism(mgx,True,DEFAULT_ISOMORPHIC_ATTACK_SIZE)
         ndm,edm,endm,eedm,pmgx = self.ne_delta_map_of_iso_reg(rgx,mgx,pmove.antipayoff,record_mg)
         
         # log the deltas for self
@@ -1315,10 +1315,10 @@ class Player:
 
     def register_AMove(self,amove,accumulated_health):
         mgx = MicroGraph.from_ResourceGraph(amove.pt)
-        iso_reg = self.rg.subgraph_isomorphism(mgx,True)
+        ##iso_reg = self.rg.subgraph_isomorphism(mgx,True)
 
         # calculate isomorphic attack on image
-        iso_reg = self.rg.subgraph_isomorphism(mgx,True)
+        iso_reg = self.rg.subgraph_isomorphism(mgx,True,DEFAULT_ISOMORPHIC_ATTACK_SIZE)
         mgx = MicroGraph(defaultdict(set))
         for ir in iso_reg:
             mgx2 = self.rg.isomap_to_isograph(mgx,ir)
@@ -1341,7 +1341,7 @@ class Player:
         mgx = MicroGraph.from_ResourceGraph(amove.at)
 
         # calculate isomorphic attack on image
-        iso_reg = self.rg.subgraph_isomorphism(mgx,True)
+        iso_reg = self.rg.subgraph_isomorphism(mgx,True,DEFAULT_ISOMORPHIC_ATTACK_SIZE)
         mgx = MicroGraph(defaultdict(set))
         for ir in iso_reg:
             mgx2 = self.rg.isomap_to_isograph(mgx,ir)
