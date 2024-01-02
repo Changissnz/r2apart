@@ -169,6 +169,13 @@ class GCSContainer:
         e3 = deque(e4.pop(0))
         self.cache.append([e1,e2,e3,e4])
 
+    """
+    return:
+    - [0] SEQUENCE<INFO(m) in mgs> s.t. INFO(m) is 
+        reference node -> target node
+      [1] edges of reference
+    - score of match, number of vertices + number of edges 
+    """
     def search(self):
         best_soln = None
         best_score = 0

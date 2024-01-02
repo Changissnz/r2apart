@@ -1,4 +1,5 @@
-from farse_mach import *
+from rules import *
+from pmove import * 
 
 """
 outputs a random ordering of integers in the
@@ -17,14 +18,12 @@ class TMEnv:
 
     """
     """
-    def __init__(self,players,game_mode_1,game_mode_2,farse_mach=None,\
-        verbose = True):
+    def __init__(self,players,game_mode_1,game_mode_2,verbose = True):
         assert game_mode_1 in GAME_MODES
         assert game_mode_2 in GAME_MODES2
         self.players = players
         self.game_mode_1 = game_mode_1
         self.game_mode_2 = game_mode_2
-        self.fm = farse_mach
         self.verbose = verbose
 
         # set the player verbosity
@@ -121,7 +120,9 @@ class TMEnv:
         print("XX: ", pseq)
 
         pseq = sorted(pseq,key=lambda x:x[1])
-        pseq = pseq[:DEFAULT_PMOVE_MAX_GAUGES]
+        
+        # NOTE: var<DEFAULT_PMOVE_MAX_GAUGES> not used
+        ##pseq = pseq[:DEFAULT_PMOVE_MAX_GAUGES]
         
         if self.verbose: 
             print("player {} PMove gauges: {}".format(self.players[p_index].idn,pseq))

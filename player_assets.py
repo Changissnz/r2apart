@@ -491,7 +491,7 @@ class AInfo:
         s += str(self.s1) + "\n\n"
         s += "\tv-e score / resource graph" + "\n"
         s += str(self.s2) + "\n\n"
-        s += "\texpected gains for other" + "\n"
+        s += "\texpected gains for self" + "\n"
         s += str(self.s3) + "\n\n"
         s += "\thit survival rate of other player" + "\n"
         s += str(self.s4) + "\n\n"
@@ -504,32 +504,34 @@ class AInfo:
 
     """
     [0] gains for self, 25-percentile min hit,25-percentile max hit,
-        75-percentile min hit, 75-percentile max hit
-    [1] 4 X # of anti-players,
+        var::q
+    [1] gains for self, 75-percentile min hit, 75-percentile max hit,
+        var::q
+
+    [var::q] 4 X # of anti-players,
         (expected losses, ratio of loss, min hit survival rate, max hit survival rate)
     """
     def condense(self):
         # player info
-        v = [deepcopy(self.s3)]
-        v.extend(deepcopy(self.s5[0]))
-        v.extend(deepcopy(self.s5[1]))
+        v1 = [deepcopy(self.s3)]
+        v1.extend(deepcopy(self.s5[0]))
+
+        v2 = [deepcopy(self.s3)]
+        v2.extend(deepcopy(self.s5[1]))
 
         # anti-player info
         vx = list(self.s1.keys())
         vx = sorted([int(vx_) for vx_ in vx])
 
-        v2 = []
+        v3 = []
         for vx_ in vx:
-            v2.extend([self.s1[str(vx_)],self.s2[str(vx_)]])
-            v2.extend(self.s4[str(vx_)])
-        return v,v2
+            v3.extend([self.s1[str(vx_)],self.s2[str(vx_)]])
+            v3.extend(self.s4[str(vx_)])
+        v1.extend(deepcopy(v3))
+        v2.extend(deepcopy(v3))
+        return v1,v2
 
     def std_condense(self):
-        # player info
-        v = [deepcopy(self.s3)]
-        v.extend(deepcopy(self.s5[0]))
-        v.extend(deepcopy(self.s5[1]))
-
         # anti-player info
             # mean of s1
         s1mean = mean_safe_division(list(set(self.s1.values())))
@@ -539,8 +541,19 @@ class AInfo:
         s4seq = mean_safe_division(list(set(self.s4.values())))
         s40mean = mean_safe_division([x[0] for x in s4seq])
         s41mean = mean_safe_division([x[1] for x in s4seq])
-        v2 = [s1mean,s2mean,s40mean,s41mean]
-        return v,v2
+        v3 = [s1mean,s2mean,s40mean,s41mean]
+
+        # player info, 25th percentile
+        v1 = [deepcopy(self.s3)]
+        v1.extend(deepcopy(self.s5[0]))
+        v1.extend(deepcopy(v3))
+
+        # player info, 75th percentile
+        v2 = [deepcopy(self.s3)]
+        v2.extend(deepcopy(self.s5[1]))
+        v2.extend(deepcopy(v3))
+
+        return v1,v2
 
 #######################################################################################
 
@@ -589,8 +602,8 @@ class NInfo:
 #######################################################################################
 
 STD_DEC_WEIGHT_INDEXSIZE_MAP = {"PInfo":(0,11),\
-    "AInfo#1":(1,5),\
-    "AInfo#2":(2,4),\
+    "AInfo#1":(1,7),\
+    "AInfo#2":(2,7),\
     "MInfo#1":(3,3),\
     "MInfo#2":(4,5),\
     "NInfo":(5,2)} 
@@ -608,8 +621,8 @@ class StdDecFunction:
     """
     weights := None or 
         [0] PInfo weights vec, size 11
-        [1] AInfo weights vec #1, size 5
-        [2] AInfo weights vec #2, size 4
+        [1] AInfo weights vec #1, size 7
+        [2] AInfo weights vec #2, size 7
         [3] MInfo weights vec #1, size 3
         [4] MInfo weights vec #2, size 5
         [5] NInfo weights vec #1, size 2
@@ -757,11 +770,6 @@ class DefInt:
                 del v[pidn]
             d[k] = v
         return d
-
-
-
-
-
 
     def display(self):
         print("-- node delta")
@@ -923,6 +931,10 @@ class DefInt:
         ve = None if len(ve) == 0 else min(ve)
         return (vx,ve)
 
+    """
+    return:
+    - (minumum hit survival rate, maximum hit survival rate)
+    """
     def hit_survival_rate_extremum_on_MG(self,mg):
         assert type(mg) == MicroGraph 
 

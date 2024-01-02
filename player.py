@@ -415,6 +415,13 @@ class PDEC:
         self.pcontext = None
 
         # greatest common subgraph, used for <AMove> calculation
+        # - Micrograph representing the greatest common subgraph
+        # - 
+        
+        self.pdec.gcs[0] = mg
+        self.pdec.gcs[1] = player_health_impact
+        self.pdec.gcs[2] = isomap
+
         self.gcs = [None,None,None]
 
         self.verbose = verbose
@@ -493,7 +500,7 @@ class PDEC:
         if type(pidn) == str:
             mgx = self.pkdb.other_mg[pidn]
             # case: null
-            if mgx == 0:
+            if type(mgx) != type(MicroGraph):
                 return None
 
             rg = ResourceGraph.from_MicroGraph(mgx)
@@ -1472,6 +1479,12 @@ class Player:
 
     #############################################################
 
+    """
+    - arguments:
+    mg := MicroGraph, represents the greatest common subgraph
+    player_health_impact := player idn -> cumulative delta from death of nodes and edges in g.c.s.
+    isomap := reference node (of mg) -> target node 
+    """
     def assign_GCS(self,mg:MicroGraph,player_health_impact,isomap):
         assert type(mg) == MicroGraph
         assert type(player_health_impact) in {type(None),defaultdict}

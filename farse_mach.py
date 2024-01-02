@@ -1,24 +1,6 @@
 # the FARSE machine, used to train players to make better moves. 
+from trapmatch_env import *
 
-from rules import *
-from pmove import * 
-
-"""
-the executor for a TMEnv
-"""
-class TMExec:
-
-      def __init__(self):
-            return -1
-
-      def execute(self):
-            return -1 
-
-"""
-?training_pattern?
-"""
-
-# TODO: complete this after completing the <trap_env> file
 """
 decision-tree learning system that applies trial-and-error 
 principles alongside metrological functions.
@@ -38,6 +20,29 @@ and stands for:
 """
 class FARSE:
 
-    def __init__(self):
+      def __init__(self,tmenv):
+            self.tme = tmenv
+            return
 
-        return -1
+      def mark_training_player(self,idn):
+            return -1
+
+      def trial_move_one_timestamp(self):
+            return -1
+
+
+      def move_one_timestamp(self):
+            return -1
+
+      def full_alternate_one_timestamp(self):
+            return -1
+
+      def alternate_one_timestamp(self):
+            return -1
+
+      # compares two timestamps, r (reference) and 
+      # p (post) to determine how the player has fared
+      # due in part to its decisions. 
+      def compare_timestamps(self,r,p):
+            return -1
+
