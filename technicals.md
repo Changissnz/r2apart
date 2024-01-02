@@ -165,46 +165,41 @@ following:
 - `PInfo`: information about a player's PMove onto 
 another player (could be onto self). Every gauge of
 a (`PMove`, `Player`) pair produces an instance.
-* node potency, continuous (magnitude of predicted float 
-delta)
-* edge potency, continuous (magnitude of predicted float 
-delta)
-* node potency, boolean (mortality by predicted float 
-delta); accurate only in public information mode.
-* edge potency, boolean (mortality by predicted float 
-delta); accurate only in public information mode. 
-* size of number of node additions for an additional isomorphism.
-* size of number of edge additions for an additional isomorphism.
-* mean of node frequency from isomorphic attack
-* minumum of node frequency from isomorphic attack
-* maximum of node frequency from isomorphic attack
-* cumulative health delta of nodes
-* cumulative health delta of edges
+    * node potency, continuous (magnitude of predicted float delta)
+    * edge potency, continuous (magnitude of predicted float delta)
+    * node potency, boolean (mortality by predicted float delta); accurate only in public information mode.
+    * edge potency, boolean (mortality by predicted float delta); accurate only in public information mode. 
+    * size of number of node additions for an additional isomorphism.
+    * size of number of edge additions for an additional isomorphism.
+    * mean of node frequency from isomorphic attack
+    * minumum of node frequency from isomorphic attack
+    * maximum of node frequency from isomorphic attack
+    * cumulative health delta of nodes
+    * cumulative health delta of edges
 - `AInfo`: two possible `AMoves` that can be taken by 
 a player, given a calculated greatest common 
 subgraph, is the 25th percentile `AMove` or 75th percentile `AMove`. 
-* expected gains for owner's payoff target.
-* minimum hit survival rate of (25|75)'th percentile graph
-* maximum hit survival rate of (25|75)'th percentile graph
-* mean expected losses of players 
-* mean ratio of nodes+edges lost for players if `AMove`
-is successfully executed
-* mean minimum hit survival rate of greatest common subgraph for other players
-* mean maximum hit survival rate of greatest common subgraph for other players
+    * expected gains for owner's payoff target.
+    * minimum hit survival rate of (25|75)'th percentile graph
+    * maximum hit survival rate of (25|75)'th percentile graph
+    * mean expected losses of players 
+    * mean ratio of nodes+edges lost for players if `AMove` is successfully executed
+    * mean minimum hit survival rate of greatest common subgraph for other players
+    * mean maximum hit survival rate of greatest common subgraph for other players
 - `MInfo`: program supports the two `MMove` types 
 "make new nodes + edges" and "withdraw". <ins>The other type, "make new move" is currently not supported.</ins>
 The variables for "make new move" (#1) are
-* c1: see the function `player.mmove_addition_score_move__type_1`
-* c2: see the function `player.mmove_addition_score_move__type_1`
-* c3: see the function `player.mmove_addition_score_move__type_1`
+    * c1: see the function `player.mmove_addition_score_move__type_1`
+    * c2: see the function `player.mmove_addition_score_move__type_1`
+    * c3: see the function `player.mmove_addition_score_move__type_1`
 For a player of `n` moves that it has information on, there will be
 `n` possible `MInfo#1` types to choose from.
 The variables for "withdraw" are 
-* number of 1-hit nodes belonging to actor 
-* number of 1-hit edges belonging to actor 
-* number of 2-hit nodes belonging to actor 
-* number of 2-hit edges belonging to actor 
-* minimum hit survival rate
+    * number of 1-hit nodes belonging to actor 
+    * number of 1-hit edges belonging to actor 
+    * number of 2-hit nodes belonging to actor 
+    * number of 2-hit edges belonging to actor 
+    * minimum hit survival rate
 - `NInfo`: 
-* 0 for `NegaChip` move, 1 for `Negochip` move
-* expected cumulative delta from `NMove`
+    * 0 for `NegaChip` move, 1 for `Negochip` move
+    * expected cumulative delta from `NMove`
