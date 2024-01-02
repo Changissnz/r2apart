@@ -150,8 +150,8 @@ player will take for the timestamp.
 The format of the `StdDecFunction` weights is as following:
 ```
 [0] PInfo weights vec, size 11
-[1] AInfo weights vec #1, size 5
-[2] AInfo weights vec #2, size 4
+[1] AInfo weights vec #1, size 7
+[2] AInfo weights vec #2, size 7
 [3] MInfo weights vec #1, size 3
 [4] MInfo weights vec #2, size 5
 [5] NInfo weights vec #1, size 2
