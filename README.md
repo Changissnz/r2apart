@@ -44,5 +44,12 @@ overview of the types of moves (`PMove`,
 `AMove`,`MMove`,`NMove`) that a player can
 take for each timestamp.
 
+# Update: 1/2/2024
+
+Decided to continue on with work on this project. 
+Downsides of expensive computational costs of subgraph
+isomorphism resolved in terms of time with the use of
+the global variable `DEFAULT_ISOMORPHIC_ATTACK_SIZE`.
+
 # License?
 Copyright 2023 Richard Pham.
