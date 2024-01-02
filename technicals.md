@@ -164,7 +164,7 @@ The variables for each of the `XInfo` weights are the
 following:
 - `PInfo`: information about a player's PMove onto 
 another player (could be onto self). Every gauge of
-a (`PMove`, `Player`) pair produces an instance.
+a (`PMove`, `Player`) pair produces an instance.  
     * node potency, continuous (magnitude of predicted float delta)
     * edge potency, continuous (magnitude of predicted float delta)
     * node potency, boolean (mortality by predicted float delta); accurate only in public information mode.
