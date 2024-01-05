@@ -929,8 +929,8 @@ class DefInt:
         vn = [v for v in self.node_hit_survival_rate.values()]
         ve = [v for v in self.edge_hit_survival_rate.values()]
         
-        vx = None if len(vn) == 0 else min(vn)
-        ve = None if len(ve) == 0 else min(ve)
+        vx = nx if len(vn) == 0 else min(vn)
+        ve = ex if len(ve) == 0 else min(ve)
         return (vx,ve)
 
     """

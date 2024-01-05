@@ -84,9 +84,18 @@ class TMEnv:
     def move_one_timestamp(self):
         self.set_ts_ordering()
 
-        for i in self.ts_ordering:
-            self.move_one_player(i) 
-        return -1
+        # convert the ordering to identifiers
+        idns = []
+        for tso in self.ts_ordering:
+            idns.append(self.players[tso].idn) 
+
+        for i in idns:
+            q = self.idn_to_index(i)
+            # case: player has been terminated
+            if q == -1:
+                continue
+            self.move_one_player(q)  
+        return
 
     """
     """
@@ -234,6 +243,7 @@ class TMEnv:
         else:
             assert False
 
+        print("RECORDIONOS")
         # record player move into its log
         self.players[player_index].record_into_pml()
 

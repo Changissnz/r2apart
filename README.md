@@ -51,5 +51,11 @@ Downsides of expensive computational costs of subgraph
 isomorphism resolved in terms of time with the use of
 the global variable `DEFAULT_ISOMORPHIC_ATTACK_SIZE`.
 
+# Update: 1/5/2024 
+
+Still bugs in `TMEnv.tme.move_one_timestamp` as 
+well as slow execution time. However, the program
+is progressing ...
+
 # License?
 Copyright 2023 Richard Pham.

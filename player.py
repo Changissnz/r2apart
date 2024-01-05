@@ -777,6 +777,7 @@ class PDEC:
             return 
 
         q2 = self.mmove_withdrawal_candidates()
+
         mhsr = min(self.def_int.minimal_hit_survival_rate())
         mds = MInfo(q,(q2[0],q2[1]),(q2[2],q2[3]),mhsr) 
         self.pcontext.load_MMove_info(mds)
@@ -793,7 +794,7 @@ class PDEC:
         # the possible additions for each of the moves
         pinfs = self.pcontext.player_MMove_gauge(self.pidn)
         mxq = self.def_int.minimal_hit_survival_rate()
-
+        """
         if type(mxq[0]) == type(None):
             return None
         #print("** MXQ")
@@ -802,7 +803,8 @@ class PDEC:
         if len(mxq_) == 0:
             mx = 1
         else:
-            mx = min(mxq_)
+        """
+        mx = min(mxq)
 
         return mmove_addition_selection__type_1(pinfs,mmove_payoff_dict,\
             minumum_node_health,minumum_edge_health,mx)
@@ -1332,20 +1334,26 @@ class Player:
 
     #############################################################
 
+    # TODO: needs testing
     def register_AMove(self,amove,accumulated_health):
         #mgx = MicroGraph.from_ResourceGraph(amove.pt)
         #iso_reg = self.rg.subgraph_isomorphism(mgx,True)
+        print("-- registering AMove onto self")
         mgx = deepcopy(amove.pt) 
 
         # calculate isomorphic attack on image
+        """
         iso_reg = self.rg.subgraph_isomorphism(mgx,True,DEFAULT_ISOMORPHIC_ATTACK_SIZE)
         mgx = MicroGraph(defaultdict(set))
         for ir in iso_reg:
             ir2 = pairseq_to_dict(ir)
             mgx2 = self.rg.isomap_to_isograph(mgx,ir2)
             mgx = mgx + mgx2
-
-        rgx_ = ResourceGraph.from_MicroGraph(mgx)
+        """
+        iso_reg = self.rg.subgraph_isomorphism(mgx,False)
+        si2 = pairseq_to_dict(iso_reg)
+        mgx1 = self.rg.isomap_to_isograph(mgx,si2)
+        rgx_ = ResourceGraph.from_MicroGraph(mgx1)
 
         l = len(rgx_.node_health_map) + len(rgx_.edges_health_map)
         if l == 0:
@@ -1358,17 +1366,24 @@ class Player:
             self.rg.update_edge(n,distributed_delta)
         return
 
+    # TODO: needs testing
     def register_AMove_hit(self,amove):
+        print("-- registering AMove hit")
         mgx = deepcopy(amove.at)
          ##MicroGraph.from_ResourceGraph(amove.at)
 
         # calculate isomorphic attack on image
-        iso_reg = self.rg.subgraph_isomorphism(mgx,True,DEFAULT_ISOMORPHIC_ATTACK_SIZE)
+        iso_reg = self.rg.subgraph_isomorphism(mgx,False)
+        si2 = pairseq_to_dict(iso_reg)
+        mgx1 = self.rg.isomap_to_isograph(mgx,si2)
+        """
         mgx1 = MicroGraph(defaultdict(set))
         for ir in iso_reg:
             si2 = pairseq_to_dict(ir)
             mgx2 = self.rg.isomap_to_isograph(mgx,si2)
             mgx1 = mgx1 + mgx2
+        """
+
         rgx_ = ResourceGraph.from_MicroGraph(mgx1)
 
         # iterate through all samples and collect relevant 
@@ -1397,9 +1412,15 @@ class Player:
             self.rg.delete_edge(x_)
 
         q = list(rgx_.node_health_map.keys())
+        print("Q:")
+        print(q)
+        print("NQ:")
+        print(set(self.rg.node_health_map.keys()))
         for q_ in q:
-            f += self.rg.node_health_map[q_]
-            self.rg.delete_node(q_)
+            # NOTE: possible bug here?
+            if q_ in self.rg.node_health_map:
+                f += self.rg.node_health_map[q_]
+                self.rg.delete_node(q_)
         return f 
 
     #############################################################
@@ -1700,4 +1721,5 @@ class Player:
 
     # TODO: add more
     def postmove_update(self):
+        print("-- post-move update for player {}".format(self.idn))
         self.pdec.def_int.hit_survival_rate_hypothesis(self.rg)
