@@ -203,3 +203,4 @@ The variables for "withdraw" are
 - `NInfo`: 
     * 0 for `NegaChip` move, 1 for `Negochip` move
     * expected cumulative delta from `NMove`
+

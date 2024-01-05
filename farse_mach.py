@@ -2,6 +2,15 @@
 from trapmatch_env import *
 
 """
+used for training purposes
+"""
+class WantedDec:
+
+      def __init__(self):
+
+            return -1
+
+"""
 decision-tree learning system that applies trial-and-error 
 principles alongside metrological functions.
 
@@ -22,13 +31,33 @@ class FARSE:
 
       def __init__(self,tmenv):
             self.tme = tmenv
+
+            # index in tme, idn of player
+            self.training_player = None
             return
 
       def mark_training_player(self,idn):
+            q = self.tme.idn_to_index(idn)
+            assert q != -1
+            self.training_player = (q,idn) 
+
+      """
+      only the training player is in verbose mode
+      """
+      def set_verbosity(self):
             return -1
 
       def trial_move_one_timestamp(self):
+            self.tme.set_ts_ordering()
+
             return -1
+
+      def trial_move_one_player(self,p_index:int):
+            # case: training player
+
+            # case: 
+            return -1
+
 
 
       def move_one_timestamp(self):

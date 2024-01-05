@@ -185,9 +185,6 @@ class PMove:
     """
     ## TODO: test
     def gauge_payoff_seq_on_RG(self,rg:ResourceGraph,is_target:bool):
-        """
-        print("GAUGING PAYOFF SEQ ON RG")
-        """
         nhdelta = defaultdict(float)
         ehdelta = defaultdict(float)
         iter_stringizededges = []
@@ -198,10 +195,9 @@ class PMove:
         mgrg = MicroGraph.from_ResourceGraph(q)#rg)
         si = rg.subgraph_isomorphism(mgrg,all_iso=True,size_limit=DEFAULT_ISOMORPHIC_ATTACK_SIZE)#,include_extra=include_extras)
 
-        print("** gauge payoff seq produces {} isomorphisms".format(len(si)))
-
             ######
         """
+        print("** gauge payoff seq produces {} isomorphisms".format(len(si)))
         print("DONE COLLECTING ISOS")
         for si_ in si: 
             print(si_)
@@ -227,7 +223,7 @@ class PMove:
             g2 = rg.isomap_to_isograph(deepcopy(mgrg),si2)
             delta_node,delta_edge,node_relevance = self.update_delta_map_for_move(\
                 delta_node,delta_edge,g2,node_relevance,is_target)
-        print("** finished accumulation of gauge on isomorphic attack")
+        ##print("** finished accumulation of gauge on isomorphic attack")
         addit = None
         if is_target:
             qx = MicroGraph.from_ResourceGraph(q) 
@@ -464,6 +460,9 @@ class MInfo:
 class AMove:
 
     def __init__(self,payoff_target:MicroGraph,antipayoff_target:MicroGraph):
+        print("TYPE1: ", type(payoff_target))
+        print("TYPE2: ", type(antipayoff_target))
+
         assert type(payoff_target) == type(antipayoff_target)
         assert type(payoff_target) == MicroGraph
         self.pt = payoff_target
@@ -476,15 +475,13 @@ class AInfo:
         assert type(s1) == defaultdict
         assert type(s4) == defaultdict
         assert len(s5) == 2
-        assert type(am1) == AMove and type(am1) == type(am2)
+        assert len(s5[0]) == 2 == len(s5[1])
 
         self.s1 = s1
         self.s2 = s2
         self.s3 = s3
         self.s4 = s4
         self.s5 = s5
-        self.am1 = am1
-        self.am2 = am2
 
     def __str__(self):
         s = "\texpected losses" + "\n"
@@ -532,25 +529,28 @@ class AInfo:
         return v1,v2
 
     def std_condense(self):
+        ##print("** STD-CONDENSE")
+        ##print(str(self))
+
         # anti-player info
             # mean of s1
         s1mean = mean_safe_division(list(set(self.s1.values())))
             # mean of s2
         s2mean = mean_safe_division(list(set(self.s2.values())))
             # mean of s4[0] and s4[1]
-        s4seq = mean_safe_division(list(set(self.s4.values())))
+        s4seq = list(set(self.s4.values()))
         s40mean = mean_safe_division([x[0] for x in s4seq])
         s41mean = mean_safe_division([x[1] for x in s4seq])
         v3 = [s1mean,s2mean,s40mean,s41mean]
 
         # player info, 25th percentile
         v1 = [deepcopy(self.s3)]
-        v1.extend(deepcopy(self.s5[0]))
+        v1.extend(deepcopy(self.s5[0][0]))
         v1.extend(deepcopy(v3))
 
         # player info, 75th percentile
         v2 = [deepcopy(self.s3)]
-        v2.extend(deepcopy(self.s5[1]))
+        v2.extend(deepcopy(self.s5[1][0]))
         v2.extend(deepcopy(v3))
 
         return v1,v2
@@ -601,12 +601,8 @@ class NInfo:
 
 #######################################################################################
 
-STD_DEC_WEIGHT_INDEXSIZE_MAP = {"PInfo":(0,11),\
-    "AInfo#1":(1,7),\
-    "AInfo#2":(2,7),\
-    "MInfo#1":(3,3),\
-    "MInfo#2":(4,5),\
-    "NInfo":(5,2)} 
+STD_DEC_WEIGHT_INDEXSIZE_MAP = {"PInfo":(0,11),"AInfo#1":(1,7),"AInfo#2":(2,7),\
+    "MInfo#1":(3,3),"MInfo#2":(4,5),"NInfo":(5,2)} 
 
 STD_DEC_WEIGHT_SEQLABELS = ["PInfo","AInfo#1","AInfo#2",\
         "MInfo#1","MInfo#2","NInfo"] 
@@ -652,14 +648,20 @@ class StdDecFunction:
     """
     def output(self,rcm_vec,move_type):
         assert move_type in STD_DEC_WEIGHT_INDEXSIZE_MAP
+        ##print("** MOVE TYPE:: ", move_type)
+        ##print("** RCM-VEC:: ", rcm_vec)
         i = STD_DEC_WEIGHT_INDEXSIZE_MAP[move_type][0]
+        ##print("** INDEXA: ",i)
         wgts = self.weights[i]
+        ##print("** ALL WEIGHTS::")
+        ##print(self.weights) 
+        ##print("** WEIGHTS:: ", wgts)
         return std_linear_combination(wgts,rcm_vec)
 
     """
-    adjusts weights. 
+    adjusts weights
     """
-    def adjust(self):
+    def adjust(self,categorical_data,minimum_output,margin=1.0):
         return -1
 
 ####################################################
@@ -941,7 +943,7 @@ class DefInt:
         mini,maxi = float("inf"),0. 
 
         # iterate through nodes and edges to get hit survival rate
-        for (k,v) in mgx.items():
+        for (k,v) in mg.dg.items():
             x = self.node_hit_survival_rate[k]
             mini = mini if mini < x else x
             maxi = maxi if maxi > x else x

@@ -5,7 +5,7 @@ import random
 import pickle
 
 def invert_simple_map(x):
-    assert type(x) in {dict,defaultdict}
+    assert type(x) in {dict,defaultdict}, "type x is {}".format(type(x))
     x2 = defaultdict(x.default_factory)
 
     for (k,v) in x.items():
@@ -273,8 +273,15 @@ class MicroGraph:
         for x in wanted_nodes:
             dg[x] = set()
 
+        print("WANTED NODES")
+        print(wanted_nodes)
+        print("WANTED EDGES")
+        print(wanted_edges)
+
         for x in wanted_edges:
-            q = wanted_edges.split(",")
+            print("X")
+            print(x) 
+            q = x.split(",")
             assert len(q) == 2
             dg[q[0]] |= dg[q[1]]
         return MicroGraph(dg)

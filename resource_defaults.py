@@ -124,10 +124,14 @@ class GCSContainer:
         # [2] remaining nodes of component to be assigned
         # [3] remaining nodes of reference in component-set form
         self.cache = None
+        self.cache_counter = 0
+
         # possible counterparts, used to improve each candidate solution
         self.pc = None
         self.search_type = search_type
         # 
+
+
         return 
 
     """
@@ -168,6 +172,7 @@ class GCSContainer:
         e4 = deepcopy(self.ref_cs)
         e3 = deque(e4.pop(0))
         self.cache.append([e1,e2,e3,e4])
+        self.cache_counter = 1
 
     """
     return:
@@ -176,13 +181,15 @@ class GCSContainer:
       [1] edges of reference
     - score of match, number of vertices + number of edges 
     """
-    def search(self):
+    def search(self,candidate_search_size_limit):
         best_soln = None
         best_score = 0
+        cssl = 0 
         while len(self.cache) > 0:
-            ##print("len cache: ", len(self.cache)) 
+            print("len cache: ", len(self.cache)) 
+            print("cache counter: ",self.cache_counter)
             c = self.cache.popleft()
-            q = self.improve_search_candidate(c)
+            q = self.improve_search_candidate(c,candidate_search_size_limit)
 
             # case: candidate with component of interest cannot be
             #       improved.
@@ -198,8 +205,16 @@ class GCSContainer:
                 # case: move on to the next component
                 else:
                     c[2] = c[3].pop(0)
+
+                    # case: cache limit has already been reached. 
+                    if type(candidate_search_size_limit) != type(None):
+                        if self.cache_counter >= candidate_search_size_limit:
+                            continue
+
                     self.cache.append(c)
-        best_soln = best_soln[:2]
+                    self.cache_counter += 1 
+        if type(best_soln) != type(None):    
+            best_soln = best_soln[:2]
         return best_soln, best_score
 
     def score_candidate(self,candidate):
@@ -223,10 +238,21 @@ class GCSContainer:
                 ec += 1
         return nc + ec 
 
-    def improve_search_candidate(self,candidate):
+    """
+    [0] SEQUENCE<INFO(m) in mgs> s.t. INFO(m) is 
+        reference node -> target node
+    [1] edges of reference
+    [2] remaining nodes of component to be assigned
+    [3] remaining nodes of reference in component-set form
+    """
+    def improve_search_candidate(self,candidate,candidate_search_size_limit):
         # case: no more nodes in component
         if len(candidate[2]) == 0:
             return candidate
+
+        if type(candidate_search_size_limit) != type(None):
+            if self.cache_counter >= candidate_search_size_limit:
+                return candidate
 
         # crawl on one of the heads in e3 to determine
         # its counterparts on the other MicroGraphs
@@ -346,6 +372,8 @@ class GCSContainer:
         if draw_edges:
             candidate_ = self.draw_candidate_edges(h,candidate_)
         self.cache.appendleft(candidate_)
+        self.cache_counter += 1
+
         index_seq[delta_index] += 1
         return self.recursive_add(h,candidate,index_seq,delta_index,draw_edges)
 
@@ -385,15 +413,23 @@ class GCSContainer:
 
     @staticmethod
     def solution_to_MG(s):
+        ##print("** S.0")
+        ##print(s[0])
+        ##print()
+        ##print("** S.1")
+        ##print(s[1])
+        ##print()
+
         assert len(s) == 2
-        assert len(s[1]) > 0
+        ##assert len(s[1]) > 0
         assert len(s[0]) > 0
 
         dg = defaultdict(set)
         # add all the nodes first
         nodes = set(s[0][0].keys())
-        for x in s[0][1:]:
-            assert nodes == set(x.keys())
+        for x in s[0]:
+            if type(x) != type(None):
+                assert nodes == set(x.keys())
 
         for n in nodes:
             dg[n] = set()

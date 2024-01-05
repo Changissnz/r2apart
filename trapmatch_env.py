@@ -26,6 +26,9 @@ class TMEnv:
         self.game_mode_2 = game_mode_2
         self.verbose = verbose
 
+        # ordering of players for the previous timestamp
+        self.ts_ordering = None
+
         # set the player verbosity
         for p in self.players:
             p.verbose = self.verbose
@@ -56,18 +59,32 @@ class TMEnv:
         return TMEnv(players,game_modes[0],game_modes[1],farse_mach) 
 
     def idn_to_player(self,idn):
-        for x in self.players:
-            if x.idn == idn: return x
-        return None
+        i = self.idn_to_index(idn)
+        if i == -1:
+            return None
+        return self.players[i]
+    
+    def idn_to_index(self,idn):
+        for (i,x) in enumerate(self.players):
+            if x.idn == idn: return i
+        return -1
+
+    def set_ts_ordering(self):
+        # set the ordering
+        self.ts_ordering = random_ordering(len(self.players))
+
+        # calculate the greatest common subgraph
+        self.gcs_exec()
+
 
     """
     moves one timestamp by a random ordering of the Players
     in the game. 
     """
     def move_one_timestamp(self):
-        ordering = random_ordering(len(self.players))
-        
-        for i in ordering:
+        self.set_ts_ordering()
+
+        for i in self.ts_ordering:
             self.move_one_player(i) 
         return -1
 
@@ -117,8 +134,6 @@ class TMEnv:
         # rank the priority of PMoves
         priorities = p.pmove_priorities()
         pseq = [(k,v) for (k,v) in priorities.items()]
-        print("XX: ", pseq)
-
         pseq = sorted(pseq,key=lambda x:x[1])
         
         # NOTE: var<DEFAULT_PMOVE_MAX_GAUGES> not used
@@ -158,6 +173,7 @@ class TMEnv:
     shared amongst the graphs. 
     """
     def gcs_exec(self,search_type = "full neighbor fit- type 2"):
+        print("* Finding the G.C.S")
 
         # convert each of the players' RG to their MG's.
         mgs = []
@@ -169,7 +185,7 @@ class TMEnv:
         # common subgraph
         gcsc = GCSContainer(deepcopy(mgs),search_type)
         gcsc.initialize_cache() 
-        s1,s2 = gcsc.search()
+        s1,s2 = gcsc.search(DEFAULT_GCS_SEARCH_CANDIDATE_SIZE)
 
         # insert a blank at the index of the reference
         s1[0].insert(gcsc.reference_index,None)

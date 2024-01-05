@@ -15,7 +15,7 @@ from trapmatch_env import *
 import time
 
 ### TEST CASE 1: <TMEnv>
-"""
+
 i = 81#4
 num_players = 3
 num_moves_range = (4,7)
@@ -37,7 +37,7 @@ tme.save_state(fp = "pickled_tme_state")
 
 ### demonstrating executing a PMove by player 0
 ###############
-\"""
+"""
 tme.feed_moving_player_info(0)
 
 # execute a PMove
@@ -47,19 +47,21 @@ mv = qm.pop()
 print("executing move {} for player 0".format(mv))
 index = tme.players[0].pmove_idn_to_index(mv)
 tme.exec_PMove(0,index)
-\"""
+"""
 ################
-
+#\"""
 t2 = time.time()
 print("time: ", t2 - t) 
-"""
+#\"""
 ######################################################
 
 # loading a saved TMEnv
+"""
 tme = TMEnv.open_state("pickled_tme_state_2")
 tme.move_one_timestamp()
 tme.save_state(fp = "pickled_tme_state_3")
-
+"""
+####
 ##############################
 """
 ###############################

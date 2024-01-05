@@ -227,6 +227,11 @@ class PContext:
     """
     def std_dec_func_AInfo_proc(self,sdf):
         amp1,amp2 = self.format_AMove_data()
+        
+        ##print("** AMP1")
+        ##print(amp1)
+        ##print("** AMP2")
+        ##print(amp2)
 
         q = {}
         if type(amp1) != type(None):
@@ -351,8 +356,8 @@ class PContext:
     - s5 := [0] (min hit survival, max hit survival), AMove [25-percentile]
             [1] (min hit survival, max hit survival), AMove [75-percentile]
     """
-    def load_AMove_info(self,s1,s2,s3,s4,s5,am1,am2):
-        self.amove_prediction = AInfo(s1,s2,s3,s4,s5,am1,am2)
+    def load_AMove_info(self,s1,s2,s3,s4,s5):
+        self.amove_prediction = AInfo(s1,s2,s3,s4,s5)
         return
 
     def load_MMove_info(self, x:MInfo):
@@ -416,12 +421,8 @@ class PDEC:
 
         # greatest common subgraph, used for <AMove> calculation
         # - Micrograph representing the greatest common subgraph
-        # - 
-        
-        self.pdec.gcs[0] = mg
-        self.pdec.gcs[1] = player_health_impact
-        self.pdec.gcs[2] = isomap
-
+        # - player health impact
+        # - isomap
         self.gcs = [None,None,None]
 
         self.verbose = verbose
@@ -627,25 +628,25 @@ class PDEC:
 
         # declare the possible AMoves
         mg1,mg2 = self.generate_possible_AMove_target_graphs()
-        am1 = AMove(mg1,deepcopy(self.gcs))
-        am2 = AMove(mg2,deepcopy(self.gcs))
+        am1 = AMove(mg1,deepcopy(self.gcs[0]))
+        am2 = AMove(mg2,deepcopy(self.gcs[0]))
 
         s50 = self.amove_hitsurvivalrate__on_self(owner,am1)
         s51 = self.amove_hitsurvivalrate__on_self(owner,am2) 
         s5 = ((s50,am1),(s51,am2))
 
-        self.pcontext.load_AMove_info(s1,s2,s3,s4,s5,am1,am2)
+        self.pcontext.load_AMove_info(s1,s2,s3,s4,s5)
         return
 
     def amove_hitsurvivalrate__on_self(self,owner,am:AMove):
         
         # convert gcs to the player's MicroGraph
-        q = owner.gcs[2]
+        q = owner.pdec.gcs[2]
         mgx = None
         if type(q) == type(None):
-            mgx = deepcopy(owner.gcs[0])
+            mgx = deepcopy(owner.pdec.gcs[0])
         else:
-            mgx = MicroGraph.isotransform_MG(owner.gcs[0],q)
+            mgx = MicroGraph.isotransform_MG(owner.pdec.gcs[0],q)
         return self.def_int.hit_survival_rate_extremum_on_MG(mgx)
 
     """
@@ -679,12 +680,12 @@ class PDEC:
         assert type(p) == Player
 
         # convert gcs to the player
-        q = p.gcs[2]
+        q = p.pdec.gcs[2]
         mgx = None
         if type(q) == type(None):
-            mgx = deepcopy(p.gcs[0])
+            mgx = deepcopy(p.pdec.gcs[0])
         else:
-            mgx = MicroGraph.isotransform_MG(p.gcs[0],q)
+            mgx = MicroGraph.isotransform_MG(p.pdec.gcs[0],q)
         return p.pdec.def_int.hit_survival_rate_extremum_on_MG(mgx)
 
     # TODO: untested 
@@ -714,7 +715,7 @@ class PDEC:
         ves = self.gcs[0].ve_score()
         for o in other_players:
             mgx = self.pkdb.other_mg[o.idn]
-            if type(mgx) == type(None):
+            if type(mgx) != MicroGraph:
                 continue
             q = mgx.ve_score()
             q = q[0] + q[1]
@@ -747,17 +748,20 @@ class PDEC:
         ehsr = sorted([(k,v) for (k,v) in self.def_int.edge_hit_survival_rate.items()],\
             key=lambda x:x[1])
 
+        nhsr_ = [x[0] for x in nhsr]
+        ehsr_ = [x[0] for x in ehsr]
+
         # generate the 25-percentile graph
         l10 = round(0.25 * len(nhsr))
         l11 = round(0.25 * len(ehsr))
         mg1 = MicroGraph.minimal_MG_by_nodes_and_edges(\
-            deepcopy(nhsr[:l10]),deepcopy(ehsr[:l11]))
+            deepcopy(nhsr_[:l10]),deepcopy(ehsr_[:l11]))
 
         # generate the 75-th percentile graph
         l20 = round(0.75 * len(nhsr))
         l21 = round(0.75 * len(ehsr))
         mg2 = MicroGraph.minimal_MG_by_nodes_and_edges(\
-            deepcopy(nhsr[l20:]),deepcopy(ehsr[l21:]))
+            deepcopy(nhsr_[l20:]),deepcopy(ehsr_[l21:]))
         return (mg1,mg2)
 
     ########################## methods for <MMove>
@@ -792,8 +796,14 @@ class PDEC:
 
         if type(mxq[0]) == type(None):
             return None
+        #print("** MXQ")
+        #print(mxq)
+        mxq_ = [x for x in mxq if type(x) != type(None)]
+        if len(mxq_) == 0:
+            mx = 1
+        else:
+            mx = min(mxq_)
 
-        mx = min(mxq) 
         return mmove_addition_selection__type_1(pinfs,mmove_payoff_dict,\
             minumum_node_health,minumum_edge_health,mx)
 
@@ -998,6 +1008,8 @@ class Player:
         # player decision struct, used to store relevant information to make
         # decisions
         self.pdec = PDEC(idn,pcontext_mapper)
+        self.pdc = None
+
         # player move log
         self.pml = PMLog(pml_type)
         self.verbose = verbose
@@ -1321,14 +1333,16 @@ class Player:
     #############################################################
 
     def register_AMove(self,amove,accumulated_health):
-        mgx = MicroGraph.from_ResourceGraph(amove.pt)
-        ##iso_reg = self.rg.subgraph_isomorphism(mgx,True)
+        #mgx = MicroGraph.from_ResourceGraph(amove.pt)
+        #iso_reg = self.rg.subgraph_isomorphism(mgx,True)
+        mgx = deepcopy(amove.pt) 
 
         # calculate isomorphic attack on image
         iso_reg = self.rg.subgraph_isomorphism(mgx,True,DEFAULT_ISOMORPHIC_ATTACK_SIZE)
         mgx = MicroGraph(defaultdict(set))
         for ir in iso_reg:
-            mgx2 = self.rg.isomap_to_isograph(mgx,ir)
+            ir2 = pairseq_to_dict(ir)
+            mgx2 = self.rg.isomap_to_isograph(mgx,ir2)
             mgx = mgx + mgx2
 
         rgx_ = ResourceGraph.from_MicroGraph(mgx)
@@ -1345,15 +1359,17 @@ class Player:
         return
 
     def register_AMove_hit(self,amove):
-        mgx = MicroGraph.from_ResourceGraph(amove.at)
+        mgx = deepcopy(amove.at)
+         ##MicroGraph.from_ResourceGraph(amove.at)
 
         # calculate isomorphic attack on image
         iso_reg = self.rg.subgraph_isomorphism(mgx,True,DEFAULT_ISOMORPHIC_ATTACK_SIZE)
-        mgx = MicroGraph(defaultdict(set))
+        mgx1 = MicroGraph(defaultdict(set))
         for ir in iso_reg:
-            mgx2 = self.rg.isomap_to_isograph(mgx,ir)
-            mgx = mgx + mgx2
-        rgx_ = ResourceGraph.from_MicroGraph(mgx)
+            si2 = pairseq_to_dict(ir)
+            mgx2 = self.rg.isomap_to_isograph(mgx,si2)
+            mgx1 = mgx1 + mgx2
+        rgx_ = ResourceGraph.from_MicroGraph(mgx1)
 
         # iterate through all samples and collect relevant 
         # set of nodes and edges, deleting each one and adding
@@ -1642,8 +1658,8 @@ class Player:
             x = self.pmove_idn_to_index(q[1])
             self.pdec.pcontext.selection = deepcopy(self.ms[x])
         elif "AInfo" in rd[0]:
-            x = self.pdec.pcontext.amove_prediction.am1 if rd[0] == "AInfo#1" else \
-                self.pdec.pcontext.amove_prediction.am2
+            x = self.pdec.pcontext.amove_prediction.s5[0][1] if rd[0] == "AInfo#1" else \
+                self.pdec.pcontext.amove_prediction.s5[1][1]
             self.pdec.pcontext.selection = deepcopy(x)
         elif "MInfo" in rd[0]:
             # TODO: ?extend mmove_predicton to three #'s?

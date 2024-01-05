@@ -102,7 +102,7 @@ class GCSContainerClass(unittest.TestCase):
 
         gcg3.search_type = "full neighbor fit- type 2"
         gcg3.initialize_cache() 
-        s1,s2 = gcg3.search() 
+        s1,s2 = gcg3.search(None) 
         assert s2 == 6
         return
 
@@ -110,7 +110,7 @@ class GCSContainerClass(unittest.TestCase):
         gcg2 = greatest_common_subgraph_case_2()
         gcg2.search_type = "full neighbor fit- type 1"
         gcg2.initialize_cache() 
-        s1,s2 = gcg2.search() 
+        s1,s2 = gcg2.search(None) 
         assert s2 == 7
         return
 
@@ -118,7 +118,7 @@ class GCSContainerClass(unittest.TestCase):
         gcg1 = greatest_common_subgraph_case_1()
         gcg1.search_type = "matching neighbor fit"
         gcg1.initialize_cache() 
-        s1,s2 = gcg1.search() 
+        s1,s2 = gcg1.search(None) 
         assert s2 == 7
         return
 
