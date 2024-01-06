@@ -202,11 +202,11 @@ For a player of `n` moves that it has information on, there will be
 `n` possible `MInfo#1` types to choose from.
 
 The variables for "withdraw" are  
-    * number of 1-hit nodes belonging to actor  
-    * number of 1-hit edges belonging to actor  
-    * number of 2-hit nodes belonging to actor  
-    * number of 2-hit edges belonging to actor   
-    * minimum hit survival rate
+* number of 1-hit nodes belonging to actor  
+* number of 1-hit edges belonging to actor  
+* number of 2-hit nodes belonging to actor  
+* number of 2-hit edges belonging to actor   
+* minimum hit survival rate
 - `NInfo`: 
     * 0 for `NegaChip` move, 1 for `Negochip` move  
     * expected cumulative delta from `NMove`  
