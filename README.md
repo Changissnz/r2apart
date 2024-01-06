@@ -57,5 +57,11 @@ Still bugs in `TMEnv.tme.move_one_timestamp` as
 well as slow execution time. However, the program
 is progressing ...
 
+# Update: 1/6/2024
+
+Trimmed down the runtime for the
+1st timestamp to approximately 385 
+seconds. 
+
 # License?
 Copyright 2023 Richard Pham.

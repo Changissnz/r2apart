@@ -1229,7 +1229,7 @@ class Player:
         mgx = MicroGraph.from_ResourceGraph(pmove.antipayoff_target)
 
         # calculate isomorphic attack on image
-        self.iso_reg = rgx.subgraph_isomorphism(mgx,True,DEFAULT_ISOMORPHIC_ATTACK_SIZE)
+        self.iso_reg = rgx.subgraph_isomorphism(mgx,True,DEFAULT_ISOMORPHIC_ATTACK_SIZE,DEFAULT_ISOMORPHIC_SEARCH_CANDIDATE_SIZE)
         ndm,edm,endm,eedm,pmgx = self.ne_delta_map_of_iso_reg(rgx,mgx,pmove.antipayoff,record_mg)
         
         # log the deltas for self
@@ -1350,7 +1350,15 @@ class Player:
             mgx2 = self.rg.isomap_to_isograph(mgx,ir2)
             mgx = mgx + mgx2
         """
-        iso_reg = self.rg.subgraph_isomorphism(mgx,False)
+        iso_reg = self.rg.subgraph_isomorphism(mgx,False,None,DEFAULT_ISOMORPHIC_SEARCH_CANDIDATE_SIZE)
+        
+        # case: no isomorphism found 
+        if type(iso_reg) == type(None):
+            return 
+        
+        print("-- collected iso-reg")
+        print(iso_reg)
+        
         si2 = pairseq_to_dict(iso_reg)
         mgx1 = self.rg.isomap_to_isograph(mgx,si2)
         rgx_ = ResourceGraph.from_MicroGraph(mgx1)
@@ -1373,7 +1381,12 @@ class Player:
          ##MicroGraph.from_ResourceGraph(amove.at)
 
         # calculate isomorphic attack on image
-        iso_reg = self.rg.subgraph_isomorphism(mgx,False)
+        iso_reg = self.rg.subgraph_isomorphism(mgx,False,None,DEFAULT_ISOMORPHIC_SEARCH_CANDIDATE_SIZE)
+        
+        # case: no isomorphism found 
+        if type(iso_reg) == type(None):
+            return  
+        
         si2 = pairseq_to_dict(iso_reg)
         mgx1 = self.rg.isomap_to_isograph(mgx,si2)
         """

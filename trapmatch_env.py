@@ -133,8 +133,6 @@ class TMEnv:
         if self.verbose:
             print("-- Context acquired")
             self.players[p_index].display_context()
-
-
         return
 
     def all_pmove_AND_player_combos(self,p_index:int):

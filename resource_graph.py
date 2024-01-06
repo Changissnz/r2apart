@@ -720,7 +720,7 @@ class ResourceGraph:
         list<dict, node self -> node other>
       otherwise: 
     """
-    def subgraph_isomorphism(self,mg,all_iso=False,size_limit=None):#,include_extra=0):
+    def subgraph_isomorphism(self,mg,all_iso=False,size_limit=None,search_candidate_limit=None):#,include_extra=0):
         search_candidates = []
         
         # get the initial candidates for each 
@@ -734,6 +734,10 @@ class ResourceGraph:
         mg2 = MicroGraph.from_ResourceGraph(self)
 
             # do minumum deletion if no include_extras
+        # case: 0 candidates, return
+        if len(dl) == 0:
+            return [] if all_iso else None 
+
         ml = dl[0]
         stat = True
         while stat:
@@ -760,33 +764,61 @@ class ResourceGraph:
         l = l[::-1]
 
         # get the candidates for the first
+        ## SECTION BELOW FOR: unordered search candidates (non-deterministic)
+        """
         for xs in qualifying[l[0][0]]:
             sl1 = [[xs,l[0][0]]]
             sl2 = set(mg.dg.keys()) - {l[0][0]}
             search_list.append([sl1,sl2])
-        
+        """
+        ## SECTION BELOW FOR: ordered search candidates (deterministic)
+        xs = sorted(list(qualifying[l[0][0]]))
+        for xs_ in xs:
+            sl1 = [[xs_,l[0][0]]]
+            sl2 = set(mg.dg.keys()) - {l[0][0]}
+            search_list.append([sl1,sl2])
+
         # continue on with search
         stat = len(search_list) != 0 
         results = []
         ##results_extra = []
+        c = 0 
         while stat:
+            ##print("* size: ", len(search_list))
+            print("* number of results: ", len(results))
+            print("* # candidates: ", c)
+            
             # pop the first candidate
             candidate = search_list.popleft()
             cand_exc = set([cdes[0] for cdes in candidate[0]])
             stat2 = len(candidate[1]) != 0
+
+            # case: 1st isomorphism found; return
             if not all_iso and not stat2:
                 if len(candidate[1]) == 0:
                     return candidate[0] 
+            # case: isomorphism found, add to results seq.
             if not stat2:
                 results.append(candidate[0])
                 stat = len(search_list) != 0
                 continue
-
+            
+            # case: number of results exceeds `size_limit`; return 
             if all_iso and type(size_limit) != type(None):
                 if len(results) >= size_limit:
                     stat = False
+                    stat = len(search_list) != 0 
                     continue
 
+            # case: number of search candidates exceeds `search_candidate_limit`
+            #       continue on w/o finishing search w/ candidate. 
+            if type(search_candidate_limit) != type(None): 
+                if c >= search_candidate_limit:
+                    stat = len(search_list) != 0 
+                    continue
+
+            ## SECTION BELOW FOR: unordered search candidates (non-deterministic)
+            """
             q = candidate[1].pop()
             # get neighbors of candidate in mg
             nmg = mg.dg[q]
@@ -796,10 +828,24 @@ class ResourceGraph:
             # get possible counterparts of q to mg2
             qual = deepcopy(qualifying[q])
             qual -= cand_exc
+            """
+
+            ## SECTION BELOW FOR: ordered search candidates (deterministic)
+            c1ordered = sorted(list(candidate[1]))
+            q = c1ordered[0]
+            candidate[1].remove(q)
+            # get neighbors of candidate in mg
+            nmg = mg.dg[q]
+            # determine counterparts of mg neighbors to mg2 in candidate map
+            counternmg = set([x[0] for x in candidate[0] if x[1] in nmg])
+            # get possible counterparts of q to mg2
+            qual = deepcopy(qualifying[q])
+            qual -= cand_exc
+            qual = sorted(list(qual))
 
             # iterate through the possible counterparts and determine 
             # which ones would work
-            c = 0 
+            ##c = 0 
             for qn in qual:
                 possible_neighbors = mg2.dg[qn]
                 inter = counternmg.issubset(possible_neighbors)
@@ -811,6 +857,10 @@ class ResourceGraph:
                     c += 1
 
             stat = len(search_list) != 0
+
+        if not all_iso:
+            return None
+
         return results# + results_extra
 
     # TODO: test
