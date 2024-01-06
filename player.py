@@ -324,9 +324,7 @@ class PContext:
 
         stat = len(nr) == 0 or len(dn) == 0
         if stat:
-            
             print("NADA for move {} of player {}".format(mv.pm_idn,player.idn))
-            
             return
 
         c = max(nr.values())  
@@ -335,12 +333,6 @@ class PContext:
         
         total_node_delta = sum(list(dn.values()))
         total_edge_delta = sum(list(de.values()))
-
-        """
-        if self.verbose:
-            print("-- total node delta: {}".format(total_node_delta))
-            print("-- total edge delta: {}".format(total_edge_delta))
-        """
 
         self.pmove_prediction[mv.pm_idn][player.idn] =  PInfo(x1,x2,si,nr,\
             total_node_delta,total_edge_delta)        
@@ -429,7 +421,7 @@ class PDEC:
         return
 
     ###################### predictive information for <PMove> ##################
-    # TODO: add anti-summarize for other players
+    
     """
     Offensive intelligence.
 
@@ -441,7 +433,7 @@ class PDEC:
     def gauge_pmove_payoff(self,actor,pmove): 
         assert type(actor) == Player
         assert type(pmove) == PMove
-        print("ATTENTION: pmove {}".format(pmove.pm_idn))
+        if self.verbose: print("ATTENTION: pmove {}".format(pmove.pm_idn))
 
         # initialize if new round
         if type(self.pcontext) == type(None):
@@ -461,22 +453,9 @@ class PDEC:
         if type(q) != type(None):
             dn,de,si,nr = q
         else:
-            print("no data")
+            if self.verbose: print("no data")
             return 
-
-        ###
-        """
-        print("SUMMARIZING:")
-        print(dn)
-        print()
-        print(de)
-        print()
-        print(si)
-        print()
-        print(nr)
-        print()
-        """
-        ###            
+           
         self.pcontext.summarize_PMove(pmove,actor,dn,de,si,nr,is_target)
         return 
 
@@ -486,14 +465,6 @@ class PDEC:
     """
     def payoff_info_for_player(self,pidn,pmove:PMove):
         assert type(pidn) in {str,Player} 
-
-        ###
-        """
-        print("PRINT TEST")
-        print(self.pkdb.other_mg[pidn])
-        print("-----")
-        """
-        ###
 
         rg = None
         is_target = None
@@ -535,7 +506,6 @@ class PDEC:
     <NegoContainer>.
     """
     def predictive_negochips_distorttransform(self,pidn,dn,de):
-        ##assert type(target_rg) in {ResourceGraph,type(None)}
 
         # convert the vector of distorted negochips to a map
         # node -> payoff
@@ -543,9 +513,7 @@ class PDEC:
             # case: not self
         if self.pidn != pidn:
             q = self.suspected_negochips[pidn]
-            """
-            print("Q")
-            """
+
             # player does not exact magnitude of negochip, assumes
             # DEFAULT_NEGOCHIP_MULTIPLIER 
             q2 = set()
@@ -794,18 +762,7 @@ class PDEC:
         # the possible additions for each of the moves
         pinfs = self.pcontext.player_MMove_gauge(self.pidn)
         mxq = self.def_int.minimal_hit_survival_rate()
-        """
-        if type(mxq[0]) == type(None):
-            return None
-        #print("** MXQ")
-        #print(mxq)
-        mxq_ = [x for x in mxq if type(x) != type(None)]
-        if len(mxq_) == 0:
-            mx = 1
-        else:
-        """
         mx = min(mxq)
-
         return mmove_addition_selection__type_1(pinfs,mmove_payoff_dict,\
             minumum_node_health,minumum_edge_health,mx)
 
@@ -841,7 +798,6 @@ class PDEC:
 
     # TODO: test
     def gauge_nmove_negochip(self,player,max_chip_number):
-        ##return -1 
         q1,q2 = self.negochip_candidates(player)
 
         # gauge distort
@@ -1002,10 +958,9 @@ class Player:
 
         # the context mapper, used for learning
         assert type(pcontext_mapper) in {type(None),type(PContextMapper)}
+            # case: assign a dumb context mapper 
         if type(pcontext_mapper) == type(None):
             pcontext_mapper = PContextMapper(StdDecFunction())
-        ##else:
-        ##    self.pcontext_mapper = pcontext_mapper
         
         # player decision struct, used to store relevant information to make
         # decisions
@@ -1055,9 +1010,6 @@ class Player:
         assert type(context_displays) == list
 
         if type(self.pdec.pcontext) == type(None):
-            """
-            print("NADA")
-            """
             return
 
         print(context_displays)
@@ -1072,16 +1024,10 @@ class Player:
                         print(str(v2))
             elif c == "AMove":
                 if type(self.pdec.pcontext.amove_prediction) == type(None):
-                    """
-                    print("NADA")
-                    """
                     continue
 
             elif c == "MMove":
                 if type(self.pdec.pcontext.mmove_prediction) == type(None):
-                    """
-                    print("NADA")
-                    """
                     continue 
                 print(str(self.pdec.pcontext.mmove_prediction))
             else:
@@ -1102,8 +1048,6 @@ class Player:
                 return i
         return index
 
-
-
     ########################## methods for decep/distort
     # NOTE: 
     """
@@ -1117,8 +1061,7 @@ class Player:
         chips = self.nc.active_chips_by_info(self.idn,"deception")
         cx = [c.loc for c in chips]
         rgx = self.rg.deception_complement(cx)
-        return rgx 
-        ##return Player(rgx,None,self.idn,0)
+        return rgx
 
     def one_gauge_PMove(self,p,move_index:int):
         assert type(p) == Player
@@ -1146,7 +1089,6 @@ class Player:
         if self.verbose: print("\t* GAUGING: NMove")
 
         l = int(round(len(self.rg.node_health_map) / 3))
-
         for p in other_players:
             self.pdec.gauge_nmove_payoff(p,l)
         return
@@ -1171,7 +1113,6 @@ class Player:
 
         # add the expected/actual maps to <DefInt>    
         self.pdec.def_int.add_sample_ea(pm_idn,ea_nodes,ea_edges)
-
         return
 
     """
@@ -1201,16 +1142,11 @@ class Player:
     registers the effects of PMove on another player
     """
     def register_PMove_anti(self,pm_idn,p_idn,ea_ndm,ea_edm):
-        print("REG PMOVE {} on {} by actor {}".format(pm_idn,p_idn,self.idn))
+        if self.verbose: print("REG PMOVE {} on {} by actor {}".format(pm_idn,p_idn,self.idn))
         self.pdec.def_int.add_antisample(self.idn,pm_idn,\
             p_idn,ea_ndm,ea_edm)
         return
 
-    
-    # INFO: 
-    # NOTE: 
-    # CAUTION
-    # WRONG
     """
     register the delta values by another player's PMove (unknown) 
     onto `rg`. 
@@ -1302,7 +1238,6 @@ class Player:
 
             tmpn.clear()
             tmpe.clear()
-
             for v_ in v:
                 tmpn[k] += payoff
                 tmpn[v_] += payoff                
@@ -1336,28 +1271,20 @@ class Player:
 
     # TODO: needs testing
     def register_AMove(self,amove,accumulated_health):
-        #mgx = MicroGraph.from_ResourceGraph(amove.pt)
-        #iso_reg = self.rg.subgraph_isomorphism(mgx,True)
-        print("-- registering AMove onto self")
+        if self.verbose: print("-- registering AMove onto self")
         mgx = deepcopy(amove.pt) 
 
-        # calculate isomorphic attack on image
-        """
-        iso_reg = self.rg.subgraph_isomorphism(mgx,True,DEFAULT_ISOMORPHIC_ATTACK_SIZE)
-        mgx = MicroGraph(defaultdict(set))
-        for ir in iso_reg:
-            ir2 = pairseq_to_dict(ir)
-            mgx2 = self.rg.isomap_to_isograph(mgx,ir2)
-            mgx = mgx + mgx2
-        """
+        # calculate isomorphic attack of size 1
         iso_reg = self.rg.subgraph_isomorphism(mgx,False,None,DEFAULT_ISOMORPHIC_SEARCH_CANDIDATE_SIZE)
         
         # case: no isomorphism found 
         if type(iso_reg) == type(None):
             return 
         
-        print("-- collected iso-reg")
-        print(iso_reg)
+        if self.verbose: 
+            print("-- collected iso-reg")
+            print(iso_reg)
+            print("---")
         
         si2 = pairseq_to_dict(iso_reg)
         mgx1 = self.rg.isomap_to_isograph(mgx,si2)
@@ -1376,9 +1303,8 @@ class Player:
 
     # TODO: needs testing
     def register_AMove_hit(self,amove):
-        print("-- registering AMove hit")
+        if self.verbose: print("-- registering AMove hit")
         mgx = deepcopy(amove.at)
-         ##MicroGraph.from_ResourceGraph(amove.at)
 
         # calculate isomorphic attack on image
         iso_reg = self.rg.subgraph_isomorphism(mgx,False,None,DEFAULT_ISOMORPHIC_SEARCH_CANDIDATE_SIZE)
@@ -1389,14 +1315,6 @@ class Player:
         
         si2 = pairseq_to_dict(iso_reg)
         mgx1 = self.rg.isomap_to_isograph(mgx,si2)
-        """
-        mgx1 = MicroGraph(defaultdict(set))
-        for ir in iso_reg:
-            si2 = pairseq_to_dict(ir)
-            mgx2 = self.rg.isomap_to_isograph(mgx,si2)
-            mgx1 = mgx1 + mgx2
-        """
-
         rgx_ = ResourceGraph.from_MicroGraph(mgx1)
 
         # iterate through all samples and collect relevant 
@@ -1418,17 +1336,13 @@ class Player:
             # case: not captured yet
                 # add to cache and to cumulative
             q2 = q2 | {x}
-            f += self.rg.edges_health_map[x]
-
+            if x in self.rg.edges_health_map:
+                f += self.rg.edges_health_map[x] * 2 # ?? 
                 # delete undirected edge from `rg`
-            self.rg.delete_edge(x)
-            self.rg.delete_edge(x_)
+                self.rg.delete_edge(x)
+                self.rg.delete_edge(x_)
 
         q = list(rgx_.node_health_map.keys())
-        print("Q:")
-        print(q)
-        print("NQ:")
-        print(set(self.rg.node_health_map.keys()))
         for q_ in q:
             # NOTE: possible bug here?
             if q_ in self.rg.node_health_map:
@@ -1608,14 +1522,6 @@ class Player:
         rx5 = rank_stddict_floatvalues(mro)
         q = merge_dictionaries__additive([rx2,rx3,\
             rx4,rx5])
-
-            ####
-        """
-        print("MERGEDQ: ")
-        print(q)
-        """
-            ####
-
         rx = rank_stddict_floatvalues(q)
         return rx
 

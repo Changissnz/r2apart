@@ -41,12 +41,17 @@ with health that does not exceed the 25-percentile, or
 the subgraph `S_75`, consisting of the nodes and edges 
 with health that does not exceed the 75-percentile.
 
-The `AMove` takes two rounds to complete. The first round
-is the planning stage, and the second round is the 
-execution stage. In order for a player `P_1` to affect 
-another player `P_2` using an `AMove`, `P_2` must have an 
-isomorphism of `C` at the time that `P_1` executes the 
-`AMove` on it.
+The greatest common subgraph for the anti-payoff graph of the 
+`AMove` is calculated by the `TMEnv` at the start of each 
+timestamp. The calculation is done so in a knowledge-agnostic
+way, meaning a player's knowledge of another player's 
+`ResourceGraph` is not a determinant, so that the greatest common 
+subgraph is assigned to each player at the start of a round. In 
+order for a player `P_1` to affect another player `P_2` using an 
+`AMove`, `P_2` must have an isomorphism of `C` at the time that 
+`P_1` executes the `AMove` on it. Exactly 1 or 0 isomorphisms of
+an anti-target's resource graphs will be affected by the `AMove`,
+and `S_25` xor `S_75` will gain the possible points. 
 
 - `MMove`
 The `MMove` is a category of move, in which the "M" stands 

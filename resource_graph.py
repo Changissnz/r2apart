@@ -68,28 +68,20 @@ def fs(rg,sort_function,map_function,scale_range,edge_function,
     svs = sort_function(mg,*additional_args__sf)
     if len(svs) == 0:
         return
-    ##print("SORTED LEN: ",len(svs))
     
     ranj = [svs[0][1],svs[-1][1]]
     ranj = sorted(ranj)
 
     for q in svs:
-        ##print("[0] node {} score {}".format(q[0],q[1]))
         q[1] = map_function(q[1],ranj,scale_range,*additional_args__mf)
-        ##print("before:\t",q[0], rg.node_health_map[q[0]])
         rg.node_health_map[q[0]] = q[1]
-        ##print("after:\t",q[0], rg.node_health_map[q[0]])
-
-        ##print("[1] node {} score {}".format(q[0],q[1]))
-
 
     # assign the health scores for the edges
     for k in rg.edges_health_map.keys():
         s = k.split(",")
         assert len(s) == 2
         qe = [rg.node_health_map[s[0]],rg.node_health_map[s[1]]]
-        rg.edges_health_map[k]  = edge_function(qe,*additional_args__ef)
-    
+        rg.edges_health_map[k]  = edge_function(qe,*additional_args__ef)    
     return
 
 def node_health_score_assignment_type_1(node_score,r1,r2):
@@ -142,7 +134,6 @@ def connectivity_score_type1(n_idn,mg,vertex_distance=1):
         else:
             q = [(x,ax[1] + 1) for x in mg.dg[ax[0]]]
             accessed.extend(q)
-
     return sum(list(connectivities.values()))
 
     ###### START: edge-score assignments
@@ -163,7 +154,6 @@ def scale_x_to_x2(x,r,r2):
     assert len(r) == len(r2)
     assert x >= r[0] and x <= r[1]
     assert r2[1] >= r2[0]
-    ##print("R: ", r, "  R2: ",r2) 
     # zero-length range case
     if r[1] == r[0]:
         return r2[1]
@@ -193,9 +183,6 @@ def rg_score_assignment_type_uniform(rg,default_health=1):
 """
 default function used to calculate a d-network from the
 input rg
-
-
-
 """
 def rg_score_assignment_type_deception__default(rg_ref,rg_dec):
 
@@ -273,14 +260,7 @@ class MicroGraph:
         for x in wanted_nodes:
             dg[x] = set()
 
-        print("WANTED NODES")
-        print(wanted_nodes)
-        print("WANTED EDGES")
-        print(wanted_edges)
-
         for x in wanted_edges:
-            print("X")
-            print(x) 
             q = x.split(",")
             assert len(q) == 2
             dg[q[0]] |= dg[q[1]]
@@ -288,8 +268,6 @@ class MicroGraph:
 
     @staticmethod
     def from_ResourceGraph(rg,directed=False):
-        
-        ##print("XXXX")
         mg = MicroGraph(defaultdict(set))
         for k in rg.node_health_map.keys():
             mg.dg[k] = set()
@@ -358,23 +336,11 @@ class MicroGraph:
     def sub_ve_score(self,mg):
         # delete all edges of mg from self
         mg1 = deepcopy(self)
-
-        ##print("to delete")
-        ##print(mg.dg) 
-
-        ##print("before deletion of nodes")
-        ##print(mg1.dg) 
-
         for (k,v) in mg.dg.items():
-            ##print("deleting edge {}-{}".format(k,v))  
             mg1.dg[k] = mg1.dg[k] - v 
 
-        ##print("after deletion of nodes")
-        ##print(mg1.dg) 
-
         # count the edges
-        es = mg1.edge_count()
-        ##print("edges: ", es) 
+        es = mg1.edge_count() 
 
         # delete all nodes
         for k in mg.dg.keys():
@@ -382,7 +348,6 @@ class MicroGraph:
 
         # count the nodes
         ns = len(mg1.dg)
-        ##print("nodes: ", ns) 
         return (ns,es)
 
     """
@@ -458,7 +423,6 @@ class ResourceGraph:
         self.edges_health_map = ehm
         self.phs = public_health_stat
         self.nic = DefaultNodeIdnCounter("0")
-        ##self.neg_chips = []
 
     def __str__(self):
         s = "\t* nodes\n"
@@ -482,9 +446,7 @@ class ResourceGraph:
         assert type(i) in {type(None),int}
         if type(i) == int:
             random.seed(i)
-        """
-        print("D: ",d)
-        """
+        
         assert type(d) == int
         assert is_valid_range(connectivity_range,[0.,1.]) 
         assert is_valid_range(hr)
@@ -697,10 +659,13 @@ class ResourceGraph:
         x = 0.
 
         for (k,v) in mg.dg.items():
-            x += self.node_health_map[k]
+            if k in self.node_health_map:
+                x += self.node_health_map[k]
+            
             for v_ in v:
                 q = k + "," + v_
-                x += self.edges_health_map[q]
+                if q in self.edges_health_map:
+                    x += self.edges_health_map[q]
         return x
 
     def ne_extremum(self):
@@ -764,14 +729,15 @@ class ResourceGraph:
         l = l[::-1]
 
         # get the candidates for the first
-        ## SECTION BELOW FOR: unordered search candidates (non-deterministic)
+        ## NOTE: SECTION BELOW FOR: unordered search candidates (non-deterministic)
         """
         for xs in qualifying[l[0][0]]:
             sl1 = [[xs,l[0][0]]]
             sl2 = set(mg.dg.keys()) - {l[0][0]}
             search_list.append([sl1,sl2])
         """
-        ## SECTION BELOW FOR: ordered search candidates (deterministic)
+
+        ## NOTE: SECTION BELOW FOR: ordered search candidates (deterministic)
         xs = sorted(list(qualifying[l[0][0]]))
         for xs_ in xs:
             sl1 = [[xs_,l[0][0]]]
@@ -781,12 +747,10 @@ class ResourceGraph:
         # continue on with search
         stat = len(search_list) != 0 
         results = []
-        ##results_extra = []
         c = 0 
         while stat:
-            ##print("* size: ", len(search_list))
-            print("* number of results: ", len(results))
-            print("* # candidates: ", c)
+            #print("* number of results: ", len(results))
+            #print("* # candidates: ", c)
             
             # pop the first candidate
             candidate = search_list.popleft()
@@ -844,8 +808,7 @@ class ResourceGraph:
             qual = sorted(list(qual))
 
             # iterate through the possible counterparts and determine 
-            # which ones would work
-            ##c = 0 
+            # which ones would work 
             for qn in qual:
                 possible_neighbors = mg2.dg[qn]
                 inter = counternmg.issubset(possible_neighbors)
@@ -855,13 +818,11 @@ class ResourceGraph:
                     cand1.append([qn,q])
                     search_list.appendleft([cand1,cand2])
                     c += 1
-
             stat = len(search_list) != 0
 
         if not all_iso:
             return None
-
-        return results# + results_extra
+        return results
 
     # TODO: test
     # NOTE: should be a isomorphism (no partial solutions)
@@ -956,7 +917,6 @@ class ResourceGraph:
             ncseq1_.pop(0)
             ncseq2_ = deepcopy(ncseq2)
             ncseq2_.remove(x)
-            
             scache.append([m,ncseq1_,ncseq2_])
 
         # build the cache until soln found

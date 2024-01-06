@@ -64,22 +64,12 @@ def brute_force_search_node_assignment__full_add(tmg,smg,mv,target:bool,ve_fitsc
     best_soln,best_assignment,best_score = None,None,float('inf')
 
     while len(search_list) > 0:
-        ##print("length of search list: ",len(search_list))
         # get the next reference node (of move) to assign
         q = search_list.popleft()
-        ##print("Q3: ", q[3])
         # case: no head, assign head or terminate
         if len(q[2]) == 0: 
             # case: terminate
             if len(q[3]) == 0:
-                """
-                print("checking solution: ")
-                if best_soln != None: print(best_soln.dg)
-                print("score")
-                print(best_score)
-                print("best assignment")
-                print(best_assignment)
-                """ 
                 
                 # TODO: determine the best soln here 
                 score = ve_fitscore(smg + q[0],mvtw)
@@ -113,8 +103,6 @@ def brute_force_search_node_assignment__full_add(tmg,smg,mv,target:bool,ve_fitsc
                     e1 = deepcopy(q[1])
                     e1[h] = x
                     e2 = deepcopy(q[2]) 
-                    ##print("E2: ",h)
-                    ##print(e2)
                     e2.insert(0,h)
                     e3 = deepcopy(q[3])
                     if h in e3: e3.remove(h)
@@ -155,11 +143,9 @@ def brute_force_search_node_assignment__full_add(tmg,smg,mv,target:bool,ve_fitsc
 
         neighbors_h_to_assign = list(neighbors_h - assigned_neighbors_h)
         search_list2 = deque([[deepcopy(q), deepcopy(neighbors_h_to_assign)]])
-        ##print("TYPE: ", type(search_list2[0][1]))
         while len(search_list2) > 0:
             sl2 = search_list2.popleft()
-            ##print("W: ", sl2[1])
-
+    
             # case: done, add to search candidates
             if len(sl2[1]) == 0:
                 search_list.appendleft(sl2[0])
@@ -168,7 +154,6 @@ def brute_force_search_node_assignment__full_add(tmg,smg,mv,target:bool,ve_fitsc
             # case: not done, assign one neighbor to all possibilities, and add those
             #           candidates back into search_list2
             ns = sl2[1].pop(0)
-            ##available = mvtw.dg[hwn] - set(sl2[0[0].dg.keys()) - set(sl2[0][1].values()) 
             available = mvtw.dg[hwn] - set(sl2[0][1].values()) 
 
             # subcase: none available, make extraneous
@@ -188,7 +173,6 @@ def brute_force_search_node_assignment__full_add(tmg,smg,mv,target:bool,ve_fitsc
                 sl3[0][0].dg[hwn] = sl3[0][0].dg[hwn] | {a}
                 sl3[0][1][ns] = a
                 sl3[0][2].append(ns)
-                ##print("SL0,3: ", sl3[0][3])
                 if ns in sl3[0][3]: sl3[0][3].remove(ns)
                 if a in sl3[0][4]: sl3[0][4].remove(a)
                 search_list2.appendleft(sl3)
@@ -316,35 +300,10 @@ class MicroGraphAssemblySolution:
 
         # update MicroGraphs
         if type(target_data) != type(None):
-            ##print("before")
-            ##print(self.mg1.dg)
             self.mg1 = self.mg1 + target_data[0]
-            ##
-            """
-            print("TARGET") 
-            print("add")
-            print(target_data[0].dg) 
-            print("dict")
-            print(target_data[1])
-            print("after")
-            print(self.mg1.dg)
-            """
-            ## 
 
         if type(antitarget_data) != type(None):
             self.mg2 = self.mg2 + antitarget_data[0]
-
-            ##
-            """
-            print("ANTI-TARGET") 
-            print("add")
-            print(antitarget_data[0].dg) 
-            print("dict")
-            print(antitarget_data[1])
-            print("after")
-            print(self.mg2.dg) 
-            """
-            ## 
 
         return
 

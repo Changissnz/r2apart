@@ -26,13 +26,16 @@ game_modes = ["noneg","public"]
 farse_mach = None
 
 tme = TMEnv.generate__type_dumb(i,num_players,num_moves_range,\
-    drange,connectivity_range,excess_range,game_modes,farse_mach)
+    drange,connectivity_range,excess_range,game_modes,True)
 
 ### demonstrate moving one timestamp
 t = time.time()
     ##
 
-tme.move_one_timestamp()
+for i in range(5):
+    print("moving one")
+    tme.move_one_timestamp()
+
 tme.save_state(fp = "pickled_tme_state")
 
 ### demonstrating executing a PMove by player 0

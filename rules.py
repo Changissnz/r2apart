@@ -9,10 +9,10 @@ DEFAULT_GCS_SEARCH_TYPE = "full neighbor fit- type 2"
 DEFAULT_BOT_FOLDER = "base_data/"
 DEFAULT_TRAINING_FOLDER = "training_data/"
 GAME_MODES = {"noneg","nego"}
-GAME_MODES2 = {"public","private"} # ??
+GAME_MODES2 = {"public","private"}
 
-DEFAULT_ISOMORPHIC_ATTACK_SIZE = 0.5 * 10 ** 5 # 1.5 
-DEFAULT_ISOMORPHIC_SEARCH_CANDIDATE_SIZE = 2.5 * 10 ** 5 # 7.5
+DEFAULT_ISOMORPHIC_ATTACK_SIZE = 0.5 * 10 ** 4 # 1.5 * 10 ** 5 
+DEFAULT_ISOMORPHIC_SEARCH_CANDIDATE_SIZE = 2.5 * 10 ** 4 # 7.5 * 10 ** 5
 DEFAULT_GCS_SEARCH_CANDIDATE_SIZE = 10 ** 5
 DEFAULT_PMOVE_MAX_GAUGES = 2
 DEFAULT_DEFINT_MEMSIZE = 3
@@ -118,7 +118,6 @@ def negochip_locations__simple_deduction(ea_node_map,is_self):
 noneg|nego-distort|nego-deception
 """
 def classify_node_by_ea_pair(ea_pair,is_self):
-    ##print("DIFF: ", ea_pair)
     if abs(ea_pair[0] - ea_pair[1]) < 3:
         return "noneg"
 

@@ -39,7 +39,7 @@ class TMEnv:
     """
     @staticmethod
     def generate__type_dumb(i:int,num_players,num_moves_range,\
-        drange,connectivity_range,excess_range,game_modes,farse_mach):
+        drange,connectivity_range,excess_range,game_modes,verbose):
         # TODO: refactor
         assert type(i) in {type(None),int}
         if type(i) == int:
@@ -56,7 +56,7 @@ class TMEnv:
             print("generating for {} with args {}".format(j,rg_args))
             p = Player.generate(None,str(j),nm,rg_args,excess,None)
             players.append(deepcopy(p))
-        return TMEnv(players,game_modes[0],game_modes[1],farse_mach) 
+        return TMEnv(players,game_modes[0],game_modes[1],verbose) 
 
     def idn_to_player(self,idn):
         i = self.idn_to_index(idn)
@@ -180,7 +180,7 @@ class TMEnv:
     shared amongst the graphs. 
     """
     def gcs_exec(self,search_type = "full neighbor fit- type 2"):
-        print("* Finding the G.C.S")
+        if self.verbose: print("* Finding the G.C.S")
 
         # convert each of the players' RG to their MG's.
         mgs = []
@@ -226,8 +226,9 @@ class TMEnv:
 
     def exec_player_choice(self,player_index,c):
         # case: PMove
-        print("CHOISHA: ")
-        print(c)
+        if self.verbose: 
+            print("CHOISHA: ",c)
+
         x = self.players[player_index].parse_rank_decision(c)
 
         if "PInfo" in c[0]:
@@ -241,7 +242,7 @@ class TMEnv:
         else:
             assert False
 
-        print("RECORDIONOS")
+        if self.verbose: print("RECORDIONOS")
         # record player move into its log
         self.players[player_index].record_into_pml()
 
@@ -261,15 +262,7 @@ class TMEnv:
             rg,pmove,True)
         dn,de = self.players[player_index].pdec.actual_negochips_distorttransform(\
             edn,ede) 
-            #pmove_index,edn,ede,rg)
-        ###
-        """
-        print("EDE: register self pmove")
-        print(dn)
-        print()
-        print(de)
-        """
-        ###
+
         self.players[player_index].register_PMove(pmove_index,edn,ede,dn,de)
 
         # register the PMove onto all other active players
@@ -280,17 +273,6 @@ class TMEnv:
         
             neap,eeap,pmgx = self.players[i].register_PMove_hit(self.players[player_index],\
                 pmove,record_mgx)
-                ###
-            """
-            print("REGISTER PMOVE HIT ON {}".format(self.players[i].idn))
-            print("NEAP")
-            print(neap)
-            print()
-            print("EEAP")
-            print(eeap)
-            print()
-            """
-                ###
             self.players[player_index].register_PMove_anti(\
                 pmove_index,self.players[i].idn,neap,eeap)
 

@@ -129,9 +129,7 @@ class GCSContainer:
         # possible counterparts, used to improve each candidate solution
         self.pc = None
         self.search_type = search_type
-        # 
-
-
+        #
         return 
 
     """
@@ -186,8 +184,8 @@ class GCSContainer:
         best_score = 0
         cssl = 0 
         while len(self.cache) > 0:
-            print("len cache: ", len(self.cache)) 
-            print("cache counter: ",self.cache_counter)
+            ##print("len cache: ", len(self.cache)) 
+            ##print("cache counter: ",self.cache_counter)
             c = self.cache.popleft()
             q = self.improve_search_candidate(c,candidate_search_size_limit)
 
@@ -273,18 +271,13 @@ class GCSContainer:
                 if ns in x:
                     q[ns].append(x[ns])
                     assigned_neighbors_r |= {ns}
-        ##print("counterparts: ", q)
-        ##print("[1]")
 
         ### TODO: full-neighbors fit 
         # gather all the possible counterparts for each MicroGraph
         self.pc = []
         for (i,x) in enumerate(candidate[0]):
-
-
             # get the remaining nodes
             rem = set(self.mgs[i].dg.keys()) - set(x.values())
-            ##print("rem: ", rem)
             
             # get the subset of nodes that are neighbors with the requirements
             q_ = set([v[i] for v in q.values()])
@@ -295,18 +288,13 @@ class GCSContainer:
             else: 
                 rem_ = set([r for r in rem if len(self.mgs[i].dg[r]) >= len(neighbors) and \
                     q_.issubset(self.mgs[i].dg[r])])
-
-            ##print("rem_: ",rem_)
             self.pc.append(list(rem_))
 
         # if any of the MicroGraphs have zero candidates, then terminate
         for pc_ in self.pc:
             if len(pc_) == 0:
-                ##print("YES")
                 return candidate
-
-        ##print("[2] pc length: ", [len(l) for l in self.pc])
-        
+    
         # make neighbors for all assigned neighbors of h
         for anr in assigned_neighbors_r:
             candidate[1].extend([h + "," + anr,\
@@ -340,20 +328,13 @@ class GCSContainer:
     """
     # NOTE: careful with stack overflow
     def recursive_add(self,h,candidate,index_seq,delta_index,draw_edges:bool):
-        ##print("index seq: ", index_seq)
-
+        
         if delta_index == -1:
             return
 
         # case: reset delta_index
         if index_seq[delta_index] >= len(self.pc[delta_index]):
-            """
-            # case: terminate, 0-index cannot be reset
-            if delta_index == 0:
-                return
-            """
-            ##print("resetting")
-
+        
             # case: reset value of `delta_index` to 0, and 
             index_seq[delta_index] = 0
             if delta_index == 0:
@@ -421,7 +402,6 @@ class GCSContainer:
         ##print()
 
         assert len(s) == 2
-        ##assert len(s[1]) > 0
         assert len(s[0]) > 0
 
         dg = defaultdict(set)

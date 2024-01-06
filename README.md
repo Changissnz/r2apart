@@ -58,10 +58,16 @@ well as slow execution time. However, the program
 is progressing ...
 
 # Update: 1/6/2024
-
-Trimmed down the runtime for the
+note#1
+------
+- Trimmed down the runtime for the
 1st timestamp to approximately 385 
-seconds. 
+seconds.
+
+note#2
+------
+- Trimmed down the runtime for the 
+first 5 timestamps to under 2 minutes.
 
 # License?
 Copyright 2023 Richard Pham.

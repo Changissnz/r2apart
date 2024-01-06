@@ -28,8 +28,6 @@ def merge_dictionaries__concatenate(d1,d2):
         q[k] = v2
     return q
 
-
-
 """
 used primarily for dictionaries with int|float values
 """
@@ -42,7 +40,6 @@ def dict_subtraction(d1,d2):
 
 def std_linear_combination(wx,sample):
     ls = len(sample)
-
 
     assert ls > 0
     assert len(wx) - 1 == len(sample)
@@ -62,9 +59,6 @@ return:
 """
 def rank_stddict_floatvalues(d,reverse=False):
     assert type(d) in {dict,defaultdict}
-    """
-    print("D: ", d)
-    """
 
     # convert d to a list
     dx = [(k,v) for (k,v) in d.items()]
@@ -81,16 +75,10 @@ def rank_stddict_floatvalues(d,reverse=False):
     dranks[dx[0][0]] = r
 
     for q in dx[1:]:
-        """
-        print("X: ", x)
-        print("Q: ", q)
-        """
         if abs(x - q[1]) > 10 ** -5:
             r += 1 
             x = q[1]
         dranks[q[0]] = r
-    ##print("RANKINGSSS: ",dranks)
-
     return dranks
 
 ## functions used to condense the delta values of a PMove on a 
@@ -196,16 +184,6 @@ class PMove:
         si = rg.subgraph_isomorphism(mgrg,all_iso=True,size_limit=DEFAULT_ISOMORPHIC_ATTACK_SIZE,\
                 search_candidate_limit = DEFAULT_ISOMORPHIC_SEARCH_CANDIDATE_SIZE)
 
-            ######
-        """
-        print("** gauge payoff seq produces {} isomorphisms".format(len(si)))
-        print("DONE COLLECTING ISOS")
-        for si_ in si: 
-            print(si_)
-            print()
-        """
-            ######
-
         # iterate through each of the isomorphisms, in reverse order
             # start with the possible extraneous
         sk = set(mgrg.dg.keys())
@@ -279,13 +257,8 @@ class PMove:
         nm2 = deepcopy(nm)
         nm2.update(isomap)
         nm2 = invert_simple_map(nm2)
-        ##
-        ##print("+ ISOMAP")
-        ##print(nm2)
-        ##
 
         em = set()
-
         # add the payoff edges
         while len(q2) > 0:
             # pop one
@@ -461,9 +434,6 @@ class MInfo:
 class AMove:
 
     def __init__(self,payoff_target:MicroGraph,antipayoff_target:MicroGraph):
-        print("TYPE1: ", type(payoff_target))
-        print("TYPE2: ", type(antipayoff_target))
-
         assert type(payoff_target) == type(antipayoff_target)
         assert type(payoff_target) == MicroGraph
         self.pt = payoff_target
@@ -530,9 +500,6 @@ class AInfo:
         return v1,v2
 
     def std_condense(self):
-        ##print("** STD-CONDENSE")
-        ##print(str(self))
-
         # anti-player info
             # mean of s1
         s1mean = mean_safe_division(list(set(self.s1.values())))
@@ -553,7 +520,6 @@ class AInfo:
         v2 = [deepcopy(self.s3)]
         v2.extend(deepcopy(self.s5[1][0]))
         v2.extend(deepcopy(v3))
-
         return v1,v2
 
 #######################################################################################
@@ -649,14 +615,8 @@ class StdDecFunction:
     """
     def output(self,rcm_vec,move_type):
         assert move_type in STD_DEC_WEIGHT_INDEXSIZE_MAP
-        ##print("** MOVE TYPE:: ", move_type)
-        ##print("** RCM-VEC:: ", rcm_vec)
         i = STD_DEC_WEIGHT_INDEXSIZE_MAP[move_type][0]
-        ##print("** INDEXA: ",i)
         wgts = self.weights[i]
-        ##print("** ALL WEIGHTS::")
-        ##print(self.weights) 
-        ##print("** WEIGHTS:: ", wgts)
         return std_linear_combination(wgts,rcm_vec)
 
     """
@@ -924,6 +884,10 @@ class DefInt:
             if v == i])
         return (nds,eds) 
 
+    """
+    NOTE: calculated minimal hit survival rate is infinity if no
+          knowledge is available. 
+    """
     def minimal_hit_survival_rate(self):
         nx,ex = float('inf'),float('inf')
 
@@ -1138,7 +1102,6 @@ class PMLog:
     
     def add_artifact(self,artifact):
         if self.lt == "full context":
-            ##assert type(artifact) == PContext
             assert True 
         else:
             assert type(artifact) in {PMove,AMove,MMove,NMove}
