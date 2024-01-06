@@ -194,9 +194,9 @@ subgraph, is the 25th percentile `AMove` or 75th percentile `AMove`.
 - `MInfo`: program supports the two `MMove` types 
 "make new nodes + edges" and "withdraw". <ins>The other type, "make new move" is currently not supported.</ins>
 The variables for "make new nodes + edges" (#1) are
-    * c1: see the function `player.mmove_addition_score_move__type_1`
-    * c2: see the function `player.mmove_addition_score_move__type_1`
-    * c3: see the function `player.mmove_addition_score_move__type_1`
+    * c1: see the function `player.mmove_addition_score_move__type_1`  
+    * c2: see the function `player.mmove_addition_score_move__type_1`  
+    * c3: see the function `player.mmove_addition_score_move__type_1`  
 For a player of `n` moves that it has information on, there will be
 `n` possible `MInfo#1` types to choose from. The variables for 
 "withdraw" are  
