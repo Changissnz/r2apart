@@ -136,7 +136,7 @@ For itself, it can place a maximum of two negochips, one of
 node of another player, it can place only one negochip of 
 `distortion` on it.
 
-## Data Structure for Player Decision
+## Context Structure for Player Decision
 The data structure that a Player uses to conduct decisions at
 every timestamp is the `PContext` structure, which provides 
 information for the possible moves it can take, each of one of
@@ -208,3 +208,29 @@ For a player of `n` moves that it has information on, there will be
 - `NInfo`: 
     * 0 for `NegaChip` move, 1 for `Negochip` move  
     * expected cumulative delta from `NMove`  
+
+# The <DefInt> Structure in Player Decision-Making
+There is a structure used by a player for defensive 
+intelligence, deemed `DefInt`. Its variables of
+pertinence are 
+
+- changes inflicted by other players onto self  
+    * node identifier -> other player idn. -> <negative delta sequence>  
+    * edge identifier -> other player idn. -> <negative delta sequence>  
+    * node identifier -> estimated number of hits to down
+    * edge identifier -> estimated number of hits to down
+- information on self's `PMove` onto others  
+    * pmove -> player -> node/edge -> expected,actual
+- information on self's `PMove` onto self
+    * pmove -> node/edge -> expected,actual
+
+`DefInt` was conceptualized with minimalism as the
+objective, so it contains only a handful of relevant 
+variable classes. `DefInt` logs the effects of `PMove`s
+of other players, stores the estimated survivability of
+nodes and edges using the metric "estimated number of
+hits to down", and stores the (expected,actual) deltas
+of `PMove`s onto others and self.
+
+These variable categories aid in calculating values
+of pertinence for the `PContext` structure.

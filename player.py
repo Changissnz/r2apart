@@ -128,6 +128,9 @@ class PContext:
 
         # the decision that Player made, type is ?Move
         self.selection = None
+        # rankings of the possible decisions
+        self.pcd = None 
+
         # descriptor for the selection
         self.selection_descriptor = None 
 
@@ -144,19 +147,7 @@ class PContext:
 
     def player_MMove_gauge(self,pidn):
         d = defaultdict(None)
-            ####
-        """
-        print("PMOVE PRED")
         for (k,v) in self.pmove_prediction.items():
-            print("K: ",k)
-            print(v)
-            print()
-        print("--------------------")
-        """
-            ####
-        for (k,v) in self.pmove_prediction.items():
-            #print("K: ",k)
-            #print("TYPE: ", type(v))
             d[k] = deepcopy(v[pidn].ne_additions)
         return d
 
@@ -205,9 +196,9 @@ class PContext:
         """
         ##
 
-        pcd = PContextDecision(pproc,aproc,mproc,nproc)
-        pcd.rank(verbose)
-        return pcd
+        self.pcd = PContextDecision(pproc,aproc,mproc,nproc)
+        self.pcd.rank(verbose)
+        return deepcopy(self.pcd)
 
     """
     - return:
@@ -965,7 +956,6 @@ class Player:
         # player decision struct, used to store relevant information to make
         # decisions
         self.pdec = PDEC(idn,pcontext_mapper)
-        self.pdc = None
 
         # player move log
         self.pml = PMLog(pml_type)

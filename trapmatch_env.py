@@ -94,7 +94,8 @@ class TMEnv:
             # case: player has been terminated
             if q == -1:
                 continue
-            self.move_one_player(q)  
+            self.move_one_player(q)
+        self.clear_timestamp_data()
         return
 
     """
@@ -330,6 +331,15 @@ class TMEnv:
         for p in self.players:
             for x in deceased_players:
                 p.remove_deceased_player(x)
+        return
+
+    """
+    clears timestamp data for all remaining players,
+    primarily the PContext structure. 
+    """
+    def clear_timestamp_data(self):
+        for p in self.players:
+            p.pcontext = None 
         return
 
     def save_state(self,fp,write_mode="wb"):

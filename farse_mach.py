@@ -1,5 +1,6 @@
 # the FARSE machine, used to train players to make better moves. 
 from trapmatch_env import *
+from morebs2 import *
 
 """
 used for training purposes
@@ -9,6 +10,13 @@ class WantedDec:
       def __init__(self):
 
             return -1
+
+"""
+return:
+- float value, larger values correspond to better performance
+"""
+def basic_performance_function(player):
+      return -1
 
 """
 decision-tree learning system that applies trial-and-error 
@@ -29,17 +37,21 @@ and stands for:
 """
 class FARSE:
 
-      def __init__(self,tmenv):
+      def __init__(self,tmenv,ballcomp_instance):
             self.tme = tmenv
+            self.tme_pre = None
 
-            # index in tme, idn of player
+            # initial index in tme, idn of player
             self.training_player = None
+            self.training_player_active = None  
+            self.context_move_index = [None,None]
             return
 
       def mark_training_player(self,idn):
             q = self.tme.idn_to_index(idn)
             assert q != -1
-            self.training_player = (q,idn) 
+            self.training_player = (q,idn)
+            self.training_player_active = (True,False) 
 
       """
       only the training player is in verbose mode
@@ -48,30 +60,104 @@ class FARSE:
             return -1
 
       def trial_move_one_timestamp(self):
+            # set the ordering
             self.tme.set_ts_ordering()
 
-            return -1
+            # make a copy of the environment
+            self.tme_pre = deepcopy(self.tme)
 
-      def trial_move_one_player(self,p_index:int):
-            # case: training player
+            # move each player initially
+            self.cycle_timestamp(False)
+            
+            # TODO: register info here
 
-            # case: 
-            return -1
+            self.restore_TMEnv_back_to_timestamp()
 
+            # cycle until training player done
+            while self.training_player_active[0] and \
+                  not self.training_player_active[1]:
+                  self.cycle_timestamp(True)
+                  self.restore_TMEnv_back_to_timestamp()
+            return
 
+      def restore_TMEnv_back_to_timestamp(self):
+            self.tme = deepcopy(self.tme_pre) 
+            return
 
-      def move_one_timestamp(self):
-            return -1
+      """
+      method to repeat activity for a timestamp 
+      """
+      def cycle_timestamp(self,next_iter:bool):
+            assert type(self.training_player) != type(None)
 
-      def full_alternate_one_timestamp(self):
-            return -1
+            # convert the ordering to identifiers
+            idns = []
+            for tso in self.ts_ordering:
+                  idns.append(self.players[tso].idn) 
 
-      def alternate_one_timestamp(self):
+            for idn in idns:
+                  stat1,stat2 = self.trial_move_one_player(idn,next_iter)
+                  if idn == self.training_player[1]: 
+                        self.training_player_active = (stat1,stat2) 
+            return 
+
+      """
+      return:
+      - player active, False or ?if training player?finished?
+      """
+      def trial_move_one_player(self,p_idn:str,next_iter:bool):
+            assert type(self.training_player) != type(None)
+
+            q = self.tme.idn_to_index(p_idn)
+            
+            # player has been terminated
+            if q == -1:
+                  return False, False 
+
+            # case: training player that has already been
+            #       initialized, move on to the next
+            if p_idn == self.training_player[1] and next_iter:
+                  m = self.select_next_move_for_training_player(q)
+                  if type(m) == type(None): return True,True
+                  self.tme.exec_player_choice(q,m)
+                  return True,False
+
+            # case: run basic <TMEnv.move_one_player>
+            self.tme.move_one_player(q)
+
+            # set the index if training player
+            if p_idn == self.training_player[1]:
+                  q2 = self.tme.idn_to_index(p_idn)
+                  l = len(self.tme.players[q2].pdec.pcontext.pcd)
+                  self.context_move_index[0] = 1
+                  self.context_move_index[1] = l - 1
+            return True,False 
+
+      """
+      """
+      def select_next_move_for_training_player(self,i:int):
+            if self.context_move_index[0] > self.context_move_index[1]:
+                  return None
+            nm = self.tme.players[i].pcontext.pcd[self.context_move_index[0]]
+            self.context_move_index[0] = self.context_move_index[0] + 1
+            return nm
+
+      """
+      call this at the end of each 
+      """
+      def fetch_relevant_info_on_timestamp(self):
             return -1
 
       # compares two timestamps, r (reference) and 
       # p (post) to determine how the player has fared
       # due in part to its decisions. 
       def compare_timestamps(self,r,p):
+            return -1
+
+      #############################################
+      """
+      record context into BallComp instance
+      """
+      def log_context(self):
             return -1
 
