@@ -8,6 +8,7 @@ DEFAULT_WMOVE_RATIO = 0.25
 DEFAULT_GCS_SEARCH_TYPE = "full neighbor fit- type 2"
 DEFAULT_BOT_FOLDER = "base_data/"
 DEFAULT_TRAINING_FOLDER = "training_data/"
+DEFAULT_PLAYER_MOVE_INFO_TYPES = ["PInfo","AInfo","MInfo","NInfo"]
 GAME_MODES = {"noneg","nego"}
 GAME_MODES2 = {"public","private"}
 

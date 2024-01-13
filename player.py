@@ -961,6 +961,10 @@ class Player:
         self.pml = PMLog(pml_type)
         self.verbose = verbose
 
+        # move type deterministic mode; to be used
+        # by <TMEnv>.
+        self.move_type_deterministic = None
+
     ########################## instantiation and display methods
 
     @staticmethod
@@ -1079,8 +1083,12 @@ class Player:
         if self.verbose: print("\t* GAUGING: NMove")
 
         l = int(round(len(self.rg.node_health_map) / 3))
+        ##print("** NUM OTHERS: ", len(other_players))
         for p in other_players:
             self.pdec.gauge_nmove_payoff(p,l)
+
+        ##print("number of nmove predictions: {}".format(self.pdec.pcontext.))
+
         return
     
     ######### register XMoves
@@ -1565,12 +1573,12 @@ class Player:
 
     def choose(self):
         # dummy choice is PMove
-        sdf = self.pdec.context_mapper.sdf
-        pcd = self.pdec.pcontext.std_dec_func_proc(sdf,self.verbose)
+        ##sdf = self.pdec.context_mapper.sdf
+        ##pcd = self.pdec.pcontext.std_dec_func_proc(sdf,self.verbose)
+        pcd = self.pdec.pcontext.pcd
         if len(pcd.ranking) == 0:
             return None
-
-        x = pcd.ranking[0]
+        x = deepcopy(pcd.ranking[0])
         return x
 
     """

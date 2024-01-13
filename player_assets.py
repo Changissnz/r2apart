@@ -954,13 +954,13 @@ class DefInt:
 
     def expected_ne_delta_for_player(self,pidn):
         nd,ed = defaultdict(float),defaultdict(float)
-        for (k,v) in self.node_delta.items(): 
-            x = self.node_delta[k][pidn]
+        for (k,v) in self.node_delta.items():
+            x = [] if pidn not in v else v[pidn]
             l = len(x)
             nd[k] = 0 if l == 0 else sum(x) / l
 
         for (k,v) in self.edge_delta.items(): 
-            x = self.edge_delta[k][pidn]
+            x = [] if pidn not in v else v[pidn] 
             l = len(x)
             ed[k] = 0 if l == 0 else sum(x) / l
         return nd,ed

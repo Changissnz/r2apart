@@ -1,6 +1,8 @@
 # the FARSE machine, used to train players to make better moves. 
 from trapmatch_env import *
-from morebs2 import *
+from morebs2 import ball_comp_test_cases,ball_comp,violation_handler
+
+DEFAULT_TS_HOP_SEQ = [2,3]
 
 """
 used for training purposes
@@ -11,11 +13,22 @@ class WantedDec:
 
             return -1
 
+## STEPS
+# implement the below two functions
+# extend BallComp into CategoricalBallComp
+      # class stores the weights necessary
+      # for each context to output a specified
+      # decision. 
+
 """
 return:
 - float value, larger values correspond to better performance
 """
 def basic_performance_function(player):
+      return -1
+
+def normalized_context_function(player):
+
       return -1
 
 """
@@ -37,9 +50,12 @@ and stands for:
 """
 class FARSE:
 
-      def __init__(self,tmenv,ballcomp_instance):
+      def __init__(self,tmenv,ballcomp_instance,\
+            timestamp_hop_seq = DEFAULT_TS_HOP_SEQ,perf_func = basic_performance_function):
             self.tme = tmenv
             self.tme_pre = None
+            self.ballcomp_instance = ballcomp_instance
+            self.pf = perf_func
 
             # initial index in tme, idn of player
             self.training_player = None
@@ -154,10 +170,20 @@ class FARSE:
       def compare_timestamps(self,r,p):
             return -1
 
+      def select_best_decision_at_timestamp(self):
+            return -1
+
       #############################################
+
+      def process_timestamps(self):
+
+            return -1
+
+      def score_training_player_performance(self):
+            return -1 
+
       """
-      record context into BallComp instance
+      record context of training player into BallComp instance
       """
       def log_context(self):
             return -1
-

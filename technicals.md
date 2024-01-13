@@ -234,3 +234,15 @@ of `PMove`s onto others and self.
 
 These variable categories aid in calculating values
 of pertinence for the `PContext` structure.
+
+# Miscellaneous features
+- `move-type deteterministic`
+description:  
+pseudo-random decision-making mechanism (uses Python 
+random seeds) for a Player that exclusively chooses a 
+move of a specified set of types. If no moves exist of 
+those types, then chooses any arbitrary move.
+
+uses:  
+aids in testing the performance of specific moves 
+executed by players.

@@ -58,6 +58,27 @@ class TMEnv:
             players.append(deepcopy(p))
         return TMEnv(players,game_modes[0],game_modes[1],verbose) 
 
+    def random_move_type_deterministic_assignment(self,num_moves_range=[0,4]):
+        assert len(num_moves_range) == 2
+        assert num_moves_range[0] <= num_moves_range[1]
+
+        for p in self.players:
+            q = deepcopy(DEFAULT_PLAYER_MOVE_INFO_TYPES)
+            nm = random.randint(num_moves_range[0],num_moves_range[1])
+            q1 = []
+            while nm > 0:
+                nmx = random.randint(0,len(q) - 1)
+                q1.append(q[nmx])
+                nm -= 1
+            p.move_type_deterministic = q1 
+            print("set player {}".format(p.idn))
+        return
+
+    def move_type_deterministic_assignment(self,move_types):
+
+        for p in self.players:
+            p.move_type_deterministic = deepcopy(move_types)
+
     def idn_to_player(self,idn):
         i = self.idn_to_index(idn)
         if i == -1:
@@ -83,7 +104,9 @@ class TMEnv:
     """
     def move_one_timestamp(self):
         self.set_ts_ordering()
-
+        if len(self.ts_ordering) <= 1:
+            print("DONE")
+            return 
         # convert the ordering to identifiers
         idns = []
         for tso in self.ts_ordering:
@@ -104,14 +127,25 @@ class TMEnv:
         # feed player info
         self.feed_moving_player_info(p_index)
 
+        # case: move-deterministic mode
+        if type(self.players[p_index].move_type_deterministic) != type(None):
+            print("type-deterministic for player {}".format(self.players[p_index].idn))
+            mi = self.player_choice_move_deterministic_mode(p_index)
         # case: allow player to decide
-        if type(mi) == type(None):
+        elif type(mi) == type(None):
             mi = self.players[p_index].choose()
+
         self.exec_player_choice(p_index,mi)
 
         if self.verbose: print("====================================")
         return
 
+    def player_choice_move_deterministic_mode(self,p_index):
+        assert type(self.players[p_index].move_type_deterministic) != type(None)
+        print("** POSSIBLE MOVES: {}".format(self.players[p_index].move_type_deterministic))
+        return self.random_player_choice_of_type(p_index,\
+            self.players[p_index].move_type_deterministic)
+        
     """
     iterates through and feed the player info.
     for its move
@@ -134,6 +168,12 @@ class TMEnv:
         if self.verbose:
             print("-- Context acquired")
             self.players[p_index].display_context()
+
+        # rank the moves by context-mapper
+        sdf = self.players[p_index].pdec.context_mapper.sdf
+        self.players[p_index].pdec.pcontext.std_dec_func_proc(sdf,self.verbose)
+
+
         return
 
     def all_pmove_AND_player_combos(self,p_index:int):
@@ -188,14 +228,30 @@ class TMEnv:
         for x in self.players:
             mg = MicroGraph.from_ResourceGraph(x.rg)
             mgs.append(mg)
+        ##print("** number of micrographs: {}".format(len(mgs)))
 
         # obtain the solution for greatest
         # common subgraph
         gcsc = GCSContainer(deepcopy(mgs),search_type)
         gcsc.initialize_cache() 
         s1,s2 = gcsc.search(DEFAULT_GCS_SEARCH_CANDIDATE_SIZE)
+        ##
+        """
+        print("S1")
+        print(s1)
+        print("S2")
+        print(s2)
+        """
+        ##
 
         # insert a blank at the index of the reference
+        if type(gcsc.reference_index) == type(None):
+            print("no <AMove>")
+            return
+        if type(s1) == type(None): 
+            print("no <AMove>")
+            return
+
         s1[0].insert(gcsc.reference_index,None)
 
         # convert the solution to the reference micrograph
@@ -253,6 +309,35 @@ class TMEnv:
         # run post-round calculations for remaining players
         self.post_round_calculations()
         return
+
+    """
+    outputs a random player choice
+    """
+    def random_player_choice_of_type(self,player_index,wanted_types):
+        indices = self.indices_for_possible_move_types(player_index,wanted_types)
+
+        # case: no wanted types available, choose random
+        if len(indices) == 0:
+            ri = random.randint(0,len(self.players[player_index].pdec.pcontext.pcd.ranking) - 1)
+        else:
+            ri = random.randint(0,len(indices) - 1)
+            ri = indices[ri]
+        c = self.players[player_index].pdec.pcontext.pcd.ranking[ri]
+        return c
+
+    """
+    search through the <PContext>s 
+    """
+    def indices_for_possible_move_types(self,player_index,wanted_types):
+        indices = []
+        for (i,m) in enumerate(self.players[player_index].pdec.pcontext.pcd.ranking):
+            r = m[0].split("-")
+            r = r[0]
+            r = r.split("#")
+            r = r[0] 
+            if r in wanted_types:
+                indices.append(i)
+        return indices
 
     # TODO: test
     def exec_PMove(self,player_index,pmove_index):
@@ -339,7 +424,7 @@ class TMEnv:
     """
     def clear_timestamp_data(self):
         for p in self.players:
-            p.pcontext = None 
+            p.pdec.pcontext = None 
         return
 
     def save_state(self,fp,write_mode="wb"):
