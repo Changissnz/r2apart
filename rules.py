@@ -215,6 +215,12 @@ class PKDB:
         self.other_mg[p_idn] = updated_mg
         return
 
+    def display(self):
+        for (k,v) in self.other_mg.items():
+            print("knowledge of player {}".format(k))
+            print(str(v))
+        return
+
 """
 Container structure to hold Negochips for a 
 Player's ResourceGraph.
@@ -243,7 +249,9 @@ class NegoContainer:
                 stat = False 
                 break
         if stat:
+            print("-- TRUADD")
             q.append(chip)
+        self.container[chip.loc] = q
         return stat
 
     def inc_one_timestamp(self):
@@ -343,7 +351,7 @@ class NegoContainer:
     def active_chips_by_node(self,n_idn,nego_type):
         q = self.container[n_idn]
         if type(q) == type(None): return []
-        return [deepcopy(q_) for q_ in q if q_.nego_type == nego_type]
+        return [deepcopy(q_) for q_ in q if q_.neg_type == nego_type]
     
     """
     return: 

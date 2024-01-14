@@ -672,6 +672,7 @@ class PDEC:
 
         s1,s2,s3 = None,defaultdict(float),None
         ves = self.gcs[0].ve_score()
+        ves = ves[0] + ves[1] 
         for o in other_players:
             mgx = self.pkdb.other_mg[o.idn]
             if type(mgx) != MicroGraph:
@@ -790,6 +791,10 @@ class PDEC:
     # TODO: test
     def gauge_nmove_negochip(self,player,max_chip_number):
         q1,q2 = self.negochip_candidates(player)
+        print("-- NEGOCHIP CANDIDATES")
+        print(q1)
+        print()
+        print(q2)
 
         # gauge distort
         data = []
@@ -808,6 +813,10 @@ class PDEC:
 
         nhsr = sorted(data,key=lambda x: abs(x[0]),reverse=True)
         q = nhsr[:max_chip_number]
+        print("-- CHIP LOC")
+        print(q)
+        print("------")
+
         nx1 = NInfo(True,player.idn,q)
         return nx1
 
@@ -1410,10 +1419,10 @@ class Player:
     #############################################################
 
     def register_NMove(self,nmove,target_player):
-        assert nmove.destination_player == target_player.pidn
+        assert nmove.destination_player == target_player.idn
         for x in nmove.chipinfo_seq:
             self.register_chip(target_player,\
-                (nmove.is_nego,self.pidn,\
+                (nmove.is_nego,self.idn,\
                     x[1],x[2]))
         return
 
@@ -1422,10 +1431,12 @@ class Player:
     """
     def register_chip(self,target_player,args):
         c = self.args_to_chip(args)
+        
         if args[0]:
-            target_player.nc.add_chip(c)
+            print("-- adding chip")
+            target_player.pdec.nc.add_chip(c)
         else:
-            target_player.nc.remove_chip(c)
+            target_player.pdec.nc.remove_chip(c)
         return
     
     """

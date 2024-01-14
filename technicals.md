@@ -245,4 +245,14 @@ those types, then chooses any arbitrary move.
 
 uses:  
 aids in testing the performance of specific moves 
-executed by players.
+executed by players.  
+
+- `preferred move`
+description:
+feature of the class `TMEnv` used to assign players the
+decision of `preferred move` in making their decisions
+for each round. 
+
+uses: 
+aids in testing the performance of specific moves
+executed by players. 

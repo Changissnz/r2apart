@@ -29,6 +29,9 @@ class TMEnv:
         # ordering of players for the previous timestamp
         self.ts_ordering = None
 
+        # preferred-move mode, used for testing
+        self.preferred_move = None
+
         # set the player verbosity
         for p in self.players:
             p.verbose = self.verbose
@@ -97,7 +100,6 @@ class TMEnv:
         # calculate the greatest common subgraph
         self.gcs_exec()
 
-
     """
     moves one timestamp by a random ordering of the Players
     in the game. 
@@ -127,16 +129,24 @@ class TMEnv:
         # feed player info
         self.feed_moving_player_info(p_index)
 
-        # case: move-deterministic mode
+        # case: move-type deterministic mode
         if type(self.players[p_index].move_type_deterministic) != type(None):
             print("type-deterministic for player {}".format(self.players[p_index].idn))
             mi = self.player_choice_move_deterministic_mode(p_index)
+        # case: preferred-move mode 
+        elif type(self.preferred_move) != type(None):
+            # get the index of preferred move
+            j = self.players[p_index].pdec.pcontext.pcd.index_of_move(self.preferred_move)
+            # subcase: index is -1, allowed player to choose
+            if j == -1:
+                mi = self.players[p_index].choose()
+            else:
+                mi = self.players[p_index].pdec.pcontext.pcd.ranking[j]
         # case: allow player to decide
         elif type(mi) == type(None):
             mi = self.players[p_index].choose()
 
         self.exec_player_choice(p_index,mi)
-
         if self.verbose: print("====================================")
         return
 

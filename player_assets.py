@@ -644,6 +644,15 @@ class PContextDecision:
         self.nproc = nproc
         self.ranking = None
 
+    def index_of_move(self,descriptor):
+        j = -1
+        if type(self.ranking) == type(None):
+            return j
+        for (i,x) in enumerate(self.ranking):
+            if x[0] == descriptor:
+                return i
+        return j
+
     def rank(self,verbose):
         q = self.to_one_vec()
         self.ranking = sorted(q,key=lambda x:x[1],reverse=True)
