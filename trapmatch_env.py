@@ -33,9 +33,13 @@ class TMEnv:
         self.preferred_move = None
 
         # set the player verbosity
+        self.set_player_verbosity(self.verbose)
+        return
+
+    def set_player_verbosity(self,v):
+        self.verbose = v
         for p in self.players:
             p.verbose = self.verbose
-        return
 
     """
     dumb generation assigns no PContextMapper to any player.
@@ -152,7 +156,6 @@ class TMEnv:
 
     def player_choice_move_deterministic_mode(self,p_index):
         assert type(self.players[p_index].move_type_deterministic) != type(None)
-        print("** POSSIBLE MOVES: {}".format(self.players[p_index].move_type_deterministic))
         return self.random_player_choice_of_type(p_index,\
             self.players[p_index].move_type_deterministic)
         
@@ -357,7 +360,7 @@ class TMEnv:
         edn,ede,at,nr = self.players[player_index].pdec.payoff_info_(\
             rg,pmove,True)
         dn,de = self.players[player_index].pdec.actual_negochips_distorttransform(\
-            edn,ede) 
+            edn,ede,self.players[player_index].idn) 
 
         self.players[player_index].register_PMove(pmove_index,edn,ede,dn,de)
 
@@ -398,6 +401,7 @@ class TMEnv:
     # TODO: test 
     def exec_NMove(self,player_index,nmove:NMove):
         px = self.idn_to_player(nmove.destination_player)
+        if self.verbose: print("-- executing NMove by {} on {}".format(self.players[player_index].idn,nmove.destination_player))
         self.players[player_index].register_NMove(nmove,px) 
         return
 

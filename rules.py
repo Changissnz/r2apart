@@ -153,6 +153,14 @@ class NegoChip:
         self.loc = loc
         self.lifespan = deepcopy(DEFAULT_NEGOCHIP_LIFESPAN)
 
+    def __str__(self):
+        s = ""
+        s += "* owner: " + self.owner + "\n"
+        s += "* neg type: " + self.neg_type + "\n"
+        s += "* loc: " + self.loc + "\n"
+        s += "* magnitude: " + str(self.magnitude) + "\n"
+        return s
+
     def __eq__(self,nc):
         stat1 = self.owner == nc.owner
         stat2 = self.neg_type == nc.neg_type
@@ -234,6 +242,17 @@ class NegoContainer:
         self.container = defaultdict(None)
         return
 
+    def __str__(self):
+        s = ""
+        for (k,v) in self.container.items():
+            s += "node: " + k + "\n"
+            for v_ in v:
+                s += str(v_)
+                s += "\n"
+            s += "---------" + "\n"
+        return s  
+
+
     """
     adds a Negochip `chip` to its designated node if
     there are no duplicates
@@ -249,7 +268,7 @@ class NegoContainer:
                 stat = False 
                 break
         if stat:
-            print("-- TRUADD")
+            ##print("-- TRUADD")
             q.append(chip)
         self.container[chip.loc] = q
         return stat

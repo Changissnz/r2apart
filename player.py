@@ -536,8 +536,8 @@ class PDEC:
     """
     used for PMove hit registration
     """
-    def actual_negochips_distorttransform(self,dn,de):
-        dcm = self.nc.distort_coefficient_map(self.pidn)
+    def actual_negochips_distorttransform(self,dn,de,pidn):
+        dcm = self.nc.distort_coefficient_map(pidn)
 
         # transform the node delta values
         for k in dn.keys():
@@ -791,10 +791,14 @@ class PDEC:
     # TODO: test
     def gauge_nmove_negochip(self,player,max_chip_number):
         q1,q2 = self.negochip_candidates(player)
+            ##
+        """
         print("-- NEGOCHIP CANDIDATES")
         print(q1)
         print()
         print(q2)
+        """
+            ##
 
         # gauge distort
         data = []
@@ -813,10 +817,13 @@ class PDEC:
 
         nhsr = sorted(data,key=lambda x: abs(x[0]),reverse=True)
         q = nhsr[:max_chip_number]
+            ##
+        """
         print("-- CHIP LOC")
         print(q)
         print("------")
-
+        """
+            ##
         nx1 = NInfo(True,player.idn,q)
         return nx1
 
@@ -985,12 +992,15 @@ class Player:
         # generate the resource graph
         rg = ResourceGraph.generate__type_stdrand(i,rg_args[0],rg_args[1],rg_args[2])
         rg = default_rg_value_assignment(rg,DEFAULT_NODE_HEALTH_RANGE)
+            ##
+        """
         moveseq = [] 
         for j in range(nm):
             pidn = str(j)
             pm = PMove.generate__type_default(i,DEFAULT_MOVE_PAYOFF_RANGE,pidn)
             moveseq.append(pm)
-
+        """
+            ##
         moveseq = generate_PMoveSeq__type_assymetric_unit(nm,DEFAULT_MOVE_PAYOFF_RANGE)
 
         # generate the moves 
@@ -1150,6 +1160,15 @@ class Player:
     """
     def register_PMove_anti(self,pm_idn,p_idn,ea_ndm,ea_edm):
         if self.verbose: print("REG PMOVE {} on {} by actor {}".format(pm_idn,p_idn,self.idn))
+            ###
+        """
+        print("-- EA_NDM ADD")
+        print(ea_ndm)
+        print()
+        print(ea_edm)
+        print("--------------------")
+        """
+            ###
         self.pdec.def_int.add_antisample(self.idn,pm_idn,\
             p_idn,ea_ndm,ea_edm)
         return
@@ -1173,12 +1192,13 @@ class Player:
 
         # calculate isomorphic attack on image
         self.iso_reg = rgx.subgraph_isomorphism(mgx,True,DEFAULT_ISOMORPHIC_ATTACK_SIZE,DEFAULT_ISOMORPHIC_SEARCH_CANDIDATE_SIZE)
+
         ndm,edm,endm,eedm,pmgx = self.ne_delta_map_of_iso_reg(rgx,mgx,pmove.antipayoff,record_mg)
         
         # log the deltas for self
-        ndm_,edm_ = self.pdec.actual_negochips_distorttransform(ndm,edm)
+        ndm_,edm_ = self.pdec.actual_negochips_distorttransform(deepcopy(ndm),deepcopy(edm),attacker.idn)
         self.log_PMove_hit(attacker.idn,ndm_,edm_)
-
+ 
         # get the expected values by attacker
         ndmq,edmq = attacker.pdec.predictive_negochips_distorttransform(self.idn,ndm,edm)
 
@@ -1245,6 +1265,12 @@ class Player:
 
             tmpn.clear()
             tmpe.clear()
+
+            ##$$ 
+            # case: single node 
+            if len(v) == 0:
+                tmpn[k] += payoff
+
             for v_ in v:
                 tmpn[k] += payoff
                 tmpn[v_] += payoff                
@@ -1290,8 +1316,6 @@ class Player:
         
         if self.verbose: 
             print("-- collected iso-reg")
-            print(iso_reg)
-            print("---")
         
         si2 = pairseq_to_dict(iso_reg)
         mgx1 = self.rg.isomap_to_isograph(mgx,si2)
@@ -1318,7 +1342,7 @@ class Player:
         
         # case: no isomorphism found 
         if type(iso_reg) == type(None):
-            return  
+            return 0
         
         si2 = pairseq_to_dict(iso_reg)
         mgx1 = self.rg.isomap_to_isograph(mgx,si2)
@@ -1431,9 +1455,8 @@ class Player:
     """
     def register_chip(self,target_player,args):
         c = self.args_to_chip(args)
-        
         if args[0]:
-            print("-- adding chip")
+            ##print("-- adding chip")
             target_player.pdec.nc.add_chip(c)
         else:
             target_player.pdec.nc.remove_chip(c)
@@ -1639,13 +1662,6 @@ class Player:
 
     def remove_deceased_player(self,idn):
         self.pdec.def_int.remove_deceased_player(idn)
-
-    """
-    used for testing
-    """
-    def dummy_move(self):
-        # choose a random move
-        ri = random.randrange()
 
     # TODO: add more
     def postmove_update(self):

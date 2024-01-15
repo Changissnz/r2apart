@@ -834,11 +834,23 @@ class ResourceGraph:
         mgslf = MicroGraph.from_ResourceGraph(self)
         isomap_inv = invert_simple_map(isomap) 
 
+        ##$$
+        if len(isomap_inv) == 1:
+            x = [(k,v) for k,v in isomap.items()]
+            output.dg[x[0][0]] = set() 
+            return output
+
         # iterate through (node of mgslf --> node of wanted_mg)
         for (k,v) in isomap.items():
+            """
+            # add the node
+            if k not in output.dg:
+                output.dg[k] = set()
+            """
+
             # get the neighbors of v in wanted_mg
             neighbors = wanted_mg.dg[v]
-
+            
             # iterate through and fetch corresponding
             # node to neighbor
             for n in neighbors:
@@ -937,6 +949,11 @@ class ResourceGraph:
                     q[0][x] = "?"
                 return q[0]
             
+            ##$$
+            # case: single node
+            if len(q[1]) == 0: 
+                continue
+
             c1 = q[1].pop(0)
             for x in q[2]:
                 qx = deepcopy(q[0])

@@ -235,6 +235,42 @@ of `PMove`s onto others and self.
 These variable categories aid in calculating values
 of pertinence for the `PContext` structure.
 
+# The PKDB structure
+
+The structure `PKDB` is an acronym for Player Knowledge 
+Database. Each player possesses an instance of this structure.
+At every timestamp, before a player decides on its best move,
+it uses the knowledge of other player's `MicroGraph` instances
+in the `PKDB` to gauge the score of every possible move that
+involves another player's `ResourceGraph`. 
+
+A player is able to collect knowledge of another player's `MicroGraph`
+through its two unit moves (see `sample_resource_graph_6` and 
+`sample_resource_graph_7`). These moves are deemed the unit moves because they 
+together are able to accurately predict the structure of other `MicroGraph` 
+instances through their `PMove` execution. These two moves are the only
+moves that adds knowledge of other player's `MicroGraph` structures to
+a player's `PKDB`. 
+
+Of important note is the `AMove` does not require knowledge from the 
+`PKDB` to execute. 
+
+# The PDEC structure
+
+This is the deciding structure of the player. It is responsible for 
+calculating the `PContext` at every timestamp for the player. It also
+holds the `PKDB` instance. Of another importance is its responsibility
+in calculating suspected negochips by other players that make the
+expected scores of `PMove` executions by the player different
+from the actual scores.
+
+MORE ON THIS LATER...
+
+# The Player Move-Chain
+
+saldfjsadlfjs;ladfjlsadjf;lsadjf;lsajfldajfsldakjfl;sazxn,
+mcvnbjxvweiuytho
+
 # Miscellaneous features
 - `move-type deteterministic`
 description:  
