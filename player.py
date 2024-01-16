@@ -1495,9 +1495,9 @@ class Player:
     #################### remove or delete
     #######################################################
 
-    def update_PKDB(self,other_player_pidn,pmgx):
+    def update_PKDB(self,other_player_pidn,pmgx,reupdate):
         assert type(pmgx) == MicroGraph
-        self.pdec.pkdb.modify_MG(other_player_pidn,pmgx)
+        self.pdec.pkdb.modify_MG(other_player_pidn,pmgx,reupdate)
 
     """
     ranks the PMove by priorities using the following

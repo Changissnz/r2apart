@@ -366,6 +366,7 @@ class TMEnv:
 
         # register the PMove onto all other active players
         record_mgx = True if pmove_index in {2,3} else False
+
         idn = self.players[player_index].idn
         for i in range(len(self.players)):
             if i == player_index: continue
@@ -377,7 +378,8 @@ class TMEnv:
 
             # update the PKDB if pmove_index in {2,3}
             if record_mgx:
-                self.players[player_index].update_PKDB(self.players[i].idn,pmgx)
+                reupdate = True if pmove_index == 2 else False
+                self.players[player_index].update_PKDB(self.players[i].idn,pmgx,reupdate)
 
         # conduct the post-analysis of the PMove to hypothesize on
         # negochip locations 

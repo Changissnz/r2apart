@@ -217,10 +217,14 @@ class PKDB:
 
     """
     """
-    def modify_MG(self,p_idn,updated_mg):
+    def modify_MG(self,p_idn,updated_mg,reupdate:bool):
         assert type(p_idn) == str
         assert type(updated_mg) == MicroGraph
-        self.other_mg[p_idn] = updated_mg
+
+        if reupdate:
+            self.other_mg[p_idn] = updated_mg
+        else:
+            self.other_mg[p_idn] = self.other_mg[p_idn] + updated_mg 
         return
 
     def display(self):

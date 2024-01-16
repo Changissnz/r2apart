@@ -34,6 +34,15 @@ def check_defint_for_TMEnv__exact_MG_match(tme:TMEnv):
             if not stat: break 
     return stat
 
+def check_defint_delta_size(p:Player,wanted_size:int,is_node_delta:bool):
+    q = p.pdec.def_int.node_delta if is_node_delta else \
+        p.pdec.def_int.edge_delta
+    for (k,v) in q.items():
+        for (k2,v2) in v.items():
+            if len(v2) != wanted_size:
+                return False
+    return True
+
 class TMEnvClass(unittest.TestCase):
 
     """
@@ -90,6 +99,11 @@ class TMEnvClass(unittest.TestCase):
         p0 = tme.idn_to_player("0")
         assert len(p0.pdec.nc.container) == 0
 
+    """
+    tests that expected and actual PMove isomorphic attack
+    scores are different after running one timestamp with 
+    `move_type_deterministic_assignment=NInfo`. 
+    """
     def test__TMEnv__move_one_timestamp__case_4(self):
 
         tme = TMEnv_sample_1()
@@ -111,8 +125,30 @@ class TMEnvClass(unittest.TestCase):
         for p in tme.players:
             exp,act = p.pdec.def_int.cumulative_expected_actual_of_move(3,False)
             assert exp != act
-    
 
+    """
+    checks for <DefInt> instances' correct delta sizes
+    of nodes+edges. 
+    """
+    def test__TMEnv__move_one_timestamp__case_5(self):
+
+        tme = TMEnv_sample_1()
+        tme.preferred_move = "PInfo-2"
+
+        for i in range(2):
+            tme.move_one_timestamp()
+
+            ##
+        tme.preferred_move = "PInfo-3"
+        for i in range(3):
+            tme.move_one_timestamp() 
+            ##
+
+        for p in tme.players:
+            stat1 = check_defint_delta_size(p,3,True)
+            stat2 = check_defint_delta_size(p,2,False)
+            assert stat1 and stat2
+        return
 
 if __name__ == '__main__':
     unittest.main()
