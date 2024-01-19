@@ -261,8 +261,7 @@ This is the deciding structure of the player. It is responsible for
 calculating the `PContext` at every timestamp for the player. It also
 holds the player's `PKDB` and `DefInt` instances. Of another importance 
 is its responsibility in calculating suspected negochips by other players 
-that make the expected scores of `PMove` executions by the player different
-from the actual scores.
+based on the differences between expected and actual scores of `PMove` executions by the player. 
 
 # The Player Move-Chain
 

@@ -834,7 +834,7 @@ class ResourceGraph:
         mgslf = MicroGraph.from_ResourceGraph(self)
         isomap_inv = invert_simple_map(isomap) 
 
-        ##$$
+        ## case: single node 
         if len(isomap_inv) == 1:
             x = [(k,v) for k,v in isomap.items()]
             output.dg[x[0][0]] = set() 
@@ -949,7 +949,6 @@ class ResourceGraph:
                     q[0][x] = "?"
                 return q[0]
             
-            ##$$
             # case: single node
             if len(q[1]) == 0: 
                 continue

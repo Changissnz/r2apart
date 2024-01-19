@@ -677,6 +677,16 @@ class PContextDecision:
         q.extend([("NInfo-" + str(i),v) for (i,v) in enumerate(self.nproc)])
         return q
 
+    def indices_for_possible_move_type(self, wanted_move_type):
+        assert wanted_move_type in STD_DEC_WEIGHT_SEQLABELS
+        indices = []
+        for (i,x) in enumerate(self.ranking): 
+            q = "-".split(x[0])
+            q = q[0]
+            if q == wanted_move_type:
+                indices.append(i)
+        return indices
+
 ########################################################################################
 
 def accumulate_ea_map(eam):

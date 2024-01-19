@@ -2,23 +2,7 @@
 from trapmatch_env import *
 from morebs2 import ball_comp_test_cases,ball_comp,violation_handler
 
-DEFAULT_TS_HOP_SEQ = [2,3]
-
-"""
-used for training purposes
-"""
-class WantedDec:
-
-      def __init__(self):
-
-            return -1
-
-## STEPS
-# implement the below two functions
-# extend BallComp into CategoricalBallComp
-      # class stores the weights necessary
-      # for each context to output a specified
-      # decision. 
+DEFAULT_TS_HOP_SEQ = [2,3,6]
 
 """
 return:
@@ -27,9 +11,61 @@ return:
 def basic_performance_function(player):
       return -1
 
-def normalized_context_function(player):
+def std_dev(seq,meen):
+      if len(seq) == 0:
+            return 0
+      diff = [(s - mean) ** 2 for s in seq] 
+      return mean_safe_division(diff) 
 
-      return -1
+"""
+return:
+- all control point values are normalized to the smallest non-zero number.
+"""
+def normalized_context_function(quad):
+      assert len(quad) == 4
+      q2 = [q for q in quad if abs(q) > 0]
+      q2 = min(q2)
+      return [q / q2 for q in quad]
+
+"""
+control points are: mean, min, max, and std. dev. 
+
+For every one of the types found in STD_DEC_WEIGHT_SEQLABELS,
+calculates control points.
+
+return: 
+- sequence of float values
+"""
+def control_point_capture_on_PContextDecision(pcd:PContextDecision):
+
+      """
+      """
+      def calculate_control_points(subseq):
+            subseq2 = [s[1] for s in subseq]
+            if len(subseq2) == 0:
+                  return 0,0,0,0
+            q = [mean_safe_division(subseq2)]
+            q.append(min(subseq2))
+            q.append(max(subseq2))
+            q.append(std_dev(subseq2,q[0]))
+            return q
+
+      cxs = []
+      for x in STD_DEC_WEIGHT_SEQLABELS:
+            indices = pcd.indices_for_possible_move_type(x)
+            q = [pcd.ranking[i] for i in indices]
+            cx = calculate_control_points(subseq)
+            cx = normalized_context_function(cx)
+            cxs.extend(cx) 
+      return cxs
+
+# TODO: 
+"""
+add two files to <FARSE>: 
+- best solution per hop seq
+- BallComp used to record contexts. 
+""" 
+#####
 
 """
 decision-tree learning system that applies trial-and-error 
@@ -50,11 +86,9 @@ and stands for:
 """
 class FARSE:
 
-      def __init__(self,tmenv,ballcomp_instance,\
-            timestamp_hop_seq = DEFAULT_TS_HOP_SEQ,perf_func = basic_performance_function):
+      def __init__(self,tmenv,timestamp_hop_seq = DEFAULT_TS_HOP_SEQ,perf_func = basic_performance_function):
             self.tme = tmenv
             self.tme_pre = None
-            self.ballcomp_instance = ballcomp_instance
             self.pf = perf_func
 
             # initial index in tme, idn of player

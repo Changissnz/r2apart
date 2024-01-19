@@ -1266,7 +1266,6 @@ class Player:
             tmpn.clear()
             tmpe.clear()
 
-            ##$$ 
             # case: single node 
             if len(v) == 0:
                 tmpn[k] += payoff
