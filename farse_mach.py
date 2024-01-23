@@ -4,12 +4,16 @@ from morebs2 import ball_comp_test_cases,ball_comp,violation_handler
 
 DEFAULT_TS_HOP_SEQ = [2,3,6]
 
+# TODO: this is a basic function
 """
 return:
 - float value, larger values correspond to better performance
 """
-def basic_performance_function(player):
-      return -1
+def basic_performance_function(player_pre,player_post):
+      assert type(player_pre) == type(player_post)
+      assert type(player_pre) == Player
+      # get the health
+      return player_post.cumulative_health() - player_pre.cumulative_health()
 
 def std_dev(seq,meen):
       if len(seq) == 0:
@@ -67,6 +71,33 @@ add two files to <FARSE>:
 """ 
 #####
 
+class HopInfo:
+
+      def __init__(self,tmenv_idn:int,next_tmenv_idn:int,hop:int,stdcontext_vec_seq,best_decision_index_seq):
+            self.tmenv_idn = tmenv_idn
+            self.next_tmenv_idn = next_tmenv_idn
+            self.hop = hop
+            self.stdcontext_vec_seq = stdcontext_vec_seq
+            self.best_decision_index_seq = best_decision_index_seq
+            return 
+
+"""
+the data structure used to store hop sequence information for a
+<FARSE>'s `training_player`.
+"""
+class HopStamp:
+
+      def __init__(self,reference_timestamp,hop_seq):
+            self.reference_timestamp = reference_timestamp
+            self.hop_seq = hop_seq
+            self.hop_infos = defaultdict(None)
+            return 
+
+      def add_one_hop_info(self,tmenv_idn:int,next_tmenv_idn:int,hop:int,stdcontext_vec_seq,best_decision_index_seq):
+            hi = HopInfo(tmenv_idn,next_tmenv_idn,hop,stdcontext_vec_seq,best_decision_index_seq)
+            self.hop_infos[hop] = hi
+            return 
+
 """
 decision-tree learning system that applies trial-and-error 
 principles alongside metrological functions.
@@ -89,12 +120,13 @@ class FARSE:
       def __init__(self,tmenv,timestamp_hop_seq = DEFAULT_TS_HOP_SEQ,perf_func = basic_performance_function):
             self.tme = tmenv
             self.tme_pre = None
+            self.ths = timestamp_hop_seq
             self.pf = perf_func
 
             # initial index in tme, idn of player
             self.training_player = None
             self.training_player_active = None  
-            self.context_move_index = [None,None]
+            self.context_move_index = [None,None]      
             return
 
       def mark_training_player(self,idn):
@@ -109,6 +141,14 @@ class FARSE:
       def set_verbosity(self):
             return -1
 
+      """
+      runs one hop round, recording all the contexts 
+      of the `training_player` into file `fp1`, and
+      the best decision for each of the hops in `ths`. 
+      """
+      def run_one_hop_round(self):
+            return -1
+
       def trial_move_one_timestamp(self):
             # set the ordering
             self.tme.set_ts_ordering()
@@ -120,7 +160,6 @@ class FARSE:
             self.cycle_timestamp(False)
             
             # TODO: register info here
-
             self.restore_TMEnv_back_to_timestamp()
 
             # cycle until training player done

@@ -653,7 +653,7 @@ class ResourceGraph:
             return 0.
         return c / d
 
-    # TODO: caution
+    # TODO: caution, double-counts the edge health
     def cumulative_ne_health_by_mg(self,mg):
         assert type(mg) == MicroGraph
         x = 0.
@@ -667,6 +667,13 @@ class ResourceGraph:
                 if q in self.edges_health_map:
                     x += self.edges_health_map[q]
         return x
+
+    # TODO: 
+    def cumulative_health(self):
+        h = 0.0
+        h = sum(self.node_health_map.values())
+        h += sum(self.edges_health_map.values())
+        return h
 
     def ne_extremum(self):
         nl = list(self.node_health_map.values())

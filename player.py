@@ -1061,6 +1061,13 @@ class Player:
                 return i
         return index
 
+    def cumulative_RG_health():
+        return self.rg.cumulative_health()
+
+    def cumulative_health(self):
+        return self.cumulative_RG_health() + self.excess
+
+
     ########################## methods for decep/distort
     # NOTE: 
     """
@@ -1487,9 +1494,6 @@ class Player:
         self.pdec.gcs[0] = mg
         self.pdec.gcs[1] = player_health_impact
         self.pdec.gcs[2] = isomap
-
-    def cumulative_RG_health():
-        return self.rg.cumulative_health()
 
     #################### remove or delete
     #######################################################
