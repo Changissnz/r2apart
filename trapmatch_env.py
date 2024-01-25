@@ -10,6 +10,17 @@ def random_ordering(i:int):
     random.shuffle(q)
     return q
 
+class FARSEInfo:
+
+    def __init__(self,parent_tmenv_idn,reference_timestamp,reference_timestamp_2,\
+        training_player_decision_index,target_hopseq):
+        self.pmi = parent_tmenv_idn
+        self.rt = reference_timestamp
+        self.rt2 = reference_timestamp_2
+        self.tpdi = training_player_decision_index
+        self.th = target_hopseq
+
+
 """
 environment for the trap-matching multi-player
 game
@@ -34,12 +45,23 @@ class TMEnv:
 
         # set the player verbosity
         self.set_player_verbosity(self.verbose)
+        self.idn = None
+        self.timestamp = 1
+
+        # used for training by FARSE
+        self.fi = None
         return
 
     def set_player_verbosity(self,v):
         self.verbose = v
         for p in self.players:
             p.verbose = self.verbose
+    
+    def assign_idn(self,idn):
+        self.idn = idn
+
+    def assign_reference_timestamp(self,rt):
+        self.reference_timestamp = rt
 
     """
     dumb generation assigns no PContextMapper to any player.

@@ -224,7 +224,10 @@ class PKDB:
         if reupdate:
             self.other_mg[p_idn] = updated_mg
         else:
-            self.other_mg[p_idn] = self.other_mg[p_idn] + updated_mg 
+            if type(self.other_mg[p_idn]) == int:
+                self.other_mg[p_idn] = updated_mg
+            else:
+                self.other_mg[p_idn] = self.other_mg[p_idn] + updated_mg 
         return
 
     def display(self):

@@ -1668,5 +1668,5 @@ class Player:
 
     # TODO: add more
     def postmove_update(self):
-        print("-- post-move update for player {}".format(self.idn))
+        if self.verbose: print("-- post-move update for player {}".format(self.idn))
         self.pdec.def_int.hit_survival_rate_hypothesis(self.rg)

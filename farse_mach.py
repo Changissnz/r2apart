@@ -12,8 +12,15 @@ return:
 def basic_performance_function(player_pre,player_post):
       assert type(player_pre) == type(player_post)
       assert type(player_pre) == Player
-      # get the health
-      return player_post.cumulative_health() - player_pre.cumulative_health()
+
+      h1 = player_post.cumulative_health()
+      h0 = player_pre.cumulative_health() 
+      
+      # calculate difference in health
+      diff = h1 - h0 
+
+      # add difference to post-health
+      return h1 + diff
 
 def std_dev(seq,meen):
       if len(seq) == 0:
@@ -31,11 +38,20 @@ def normalized_context_function(quad):
       q2 = min(q2)
       return [q / q2 for q in quad]
 
+def is_pertinent_timestamp(ts,hop_seq):
+      # case: timestamp an element of hop_seq
+      if ts in hop_seq:
+            return True
+      #h = 
+      return -1
+
 """
 control points are: mean, min, max, and std. dev. 
 
 For every one of the types found in STD_DEC_WEIGHT_SEQLABELS,
 calculates control points.
+
+Control point captures are used for <BallComp> classifications.
 
 return: 
 - sequence of float values
@@ -63,14 +79,9 @@ def control_point_capture_on_PContextDecision(pcd:PContextDecision):
             cxs.extend(cx) 
       return cxs
 
-# TODO: 
 """
-add two files to <FARSE>: 
-- best solution per hop seq
-- BallComp used to record contexts. 
-""" 
-#####
-
+class stores an element of <FARSE>'s trials to be written to the data file
+"""
 class HopInfo:
 
       def __init__(self,tmenv_idn:int,next_tmenv_idn:int,hop:int,stdcontext_vec_seq,best_decision_index_seq):
@@ -79,7 +90,7 @@ class HopInfo:
             self.hop = hop
             self.stdcontext_vec_seq = stdcontext_vec_seq
             self.best_decision_index_seq = best_decision_index_seq
-            return 
+            return
 
 """
 the data structure used to store hop sequence information for a
@@ -97,6 +108,7 @@ class HopStamp:
             hi = HopInfo(tmenv_idn,next_tmenv_idn,hop,stdcontext_vec_seq,best_decision_index_seq)
             self.hop_infos[hop] = hi
             return 
+
 
 """
 decision-tree learning system that applies trial-and-error 
@@ -123,11 +135,25 @@ class FARSE:
             self.ths = timestamp_hop_seq
             self.pf = perf_func
 
-            # initial index in tme, idn of player
             self.training_player = None
             self.training_player_active = None  
-            self.context_move_index = [None,None]      
+            
+            # initial index in tme, idn of player
+            self.context_move_index = [None,None] 
+            # value from 1-MAX(`self.ths`)
+            self.hopsearch_index = 0
+            self.tmenv_counter = DefaultNodeIdnCounter("0")
+            self.set_TMEnv_idn()
+
+            self.timestamp_counter = 0
+            self.reference_timestamp = None 
+
+            self.hopsearch_cache = []
+            self.tmp_cache = []    
             return
+
+      def initialize_FI_cache(self,tme:TMEnv):
+            return -1
 
       def mark_training_player(self,idn):
             q = self.tme.idn_to_index(idn)
@@ -147,9 +173,11 @@ class FARSE:
       the best decision for each of the hops in `ths`. 
       """
       def run_one_hop_round(self):
+            # set reference timestamp here.
             return -1
 
       def trial_move_one_timestamp(self):
+            
             # set the ordering
             self.tme.set_ts_ordering()
 
@@ -157,20 +185,34 @@ class FARSE:
             self.tme_pre = deepcopy(self.tme)
 
             # move each player initially
+            print("initial analysis & move")
             self.cycle_timestamp(False)
             
             # TODO: register info here
             self.restore_TMEnv_back_to_timestamp()
+
 
             # cycle until training player done
             while self.training_player_active[0] and \
                   not self.training_player_active[1]:
                   self.cycle_timestamp(True)
                   self.restore_TMEnv_back_to_timestamp()
+
+            self.timestamp_counter += 1
             return
 
       def restore_TMEnv_back_to_timestamp(self):
-            self.tme = deepcopy(self.tme_pre) 
+            tme2 = self.tme
+            self.tme = deepcopy(self.tme_pre)
+
+            # get the training PContext for `tme2`
+            index = tme2.idn_to_index(self.training_player[1])
+            q = tme2.players[index].pdec.pcontext
+
+            # assign it to `self.tme`
+            index2 = self.tme.idn_to_index(self.training_player[1])
+            self.tme.players[index2].pdec.pcontext = q
+
             return
 
       """
@@ -178,27 +220,59 @@ class FARSE:
       """
       def cycle_timestamp(self,next_iter:bool):
             assert type(self.training_player) != type(None)
+            parent_idn = deepcopy(self.tme.idn)
+            self.set_TMEnv_idn()
+
+            print("** context move index")
+            print(self.context_move_index)
+            print("** tmp cache len")
+            print(len(self.tmp_cache))
 
             # convert the ordering to identifiers
             idns = []
-            for tso in self.ts_ordering:
-                  idns.append(self.players[tso].idn) 
+            for tso in self.tme.ts_ordering:
+                  idns.append(self.tme.players[tso].idn) 
 
             for idn in idns:
                   stat1,stat2 = self.trial_move_one_player(idn,next_iter)
+                  # case: is training_player
                   if idn == self.training_player[1]: 
-                        self.training_player_active = (stat1,stat2) 
+                        self.training_player_active = (stat1,stat2)
+                        dec_index = self.context_move_index[0] -1 
+
+                        if self.training_player_active[0] and not \
+                              self.training_player_active[1]:
+                              self.add_training_cycle_to_tmpcache()##parent_idn,dec_index)
+
             return 
+
+      def set_TMEnv_idn(self):
+            self.tme.assign_idn(next(self.tmenv_counter))
+            return
+
+      """
+      adds the TMEnv to cache and determines if it is the best solution
+      """
+      def add_training_cycle_to_tmpcache(self):
+            # 
+            self.tmp_cache.append(deepcopy(self.tme))
+            return
+
+      def review_tmp_cache(self):
+
+            return -1
 
       """
       return:
       - player active, False or ?if training player?finished?
       """
       def trial_move_one_player(self,p_idn:str,next_iter:bool):
+            print("moving player: ", p_idn, " | next iter: ", next_iter) 
+            print("")
             assert type(self.training_player) != type(None)
 
             q = self.tme.idn_to_index(p_idn)
-            
+
             # player has been terminated
             if q == -1:
                   return False, False 
@@ -217,7 +291,7 @@ class FARSE:
             # set the index if training player
             if p_idn == self.training_player[1]:
                   q2 = self.tme.idn_to_index(p_idn)
-                  l = len(self.tme.players[q2].pdec.pcontext.pcd)
+                  l = len(self.tme.players[q2].pdec.pcontext.pcd.ranking)
                   self.context_move_index[0] = 1
                   self.context_move_index[1] = l - 1
             return True,False 
@@ -227,7 +301,7 @@ class FARSE:
       def select_next_move_for_training_player(self,i:int):
             if self.context_move_index[0] > self.context_move_index[1]:
                   return None
-            nm = self.tme.players[i].pcontext.pcd[self.context_move_index[0]]
+            nm = self.tme.players[i].pdec.pcontext.pcd.ranking[self.context_move_index[0]]
             self.context_move_index[0] = self.context_move_index[0] + 1
             return nm
 
@@ -244,6 +318,13 @@ class FARSE:
             return -1
 
       def select_best_decision_at_timestamp(self):
+            return -1
+
+      """
+
+      """
+      def cache_candidate_selection(self,size=1):
+
             return -1
 
       #############################################

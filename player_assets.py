@@ -425,7 +425,7 @@ class MInfo:
             md = (q[1],self.msd[q[1]])
             mt = "MInfo#1"
         else:
-            md = (deepcopy(self.msd1),deepcopy(self.msd2))
+            md = (deepcopy(self.ne1),deepcopy(self.ne2))
             mt = "MInfo#2"
         return MMove(mt,md)
 
