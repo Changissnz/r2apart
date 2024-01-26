@@ -992,19 +992,19 @@ class Player:
         # generate the resource graph
         rg = ResourceGraph.generate__type_stdrand(i,rg_args[0],rg_args[1],rg_args[2])
         rg = default_rg_value_assignment(rg,DEFAULT_NODE_HEALTH_RANGE)
-            ##
-        """
-        moveseq = [] 
-        for j in range(nm):
-            pidn = str(j)
-            pm = PMove.generate__type_default(i,DEFAULT_MOVE_PAYOFF_RANGE,pidn)
-            moveseq.append(pm)
-        """
-            ##
-        moveseq = generate_PMoveSeq__type_assymetric_unit(nm,DEFAULT_MOVE_PAYOFF_RANGE)
 
         # generate the moves 
+        moveseq = generate_PMoveSeq__type_assymetric_unit(nm,DEFAULT_MOVE_PAYOFF_RANGE)
+
         return Player(rg,moveseq,idn,excess,pcm)
+
+    """
+    copy of player with only its `ResourceGraph` and `excess`
+    variables that are non-empty
+    """
+    def hollow_player(self):
+        return Player(deepcopy(self.rg),[],deepcopy(self.idn),\
+            self.excess,None,pml_type="full context",verbose=False)
 
     """
     typically called by TMEnv to set all players to `verbosity` mode

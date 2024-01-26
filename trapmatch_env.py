@@ -13,12 +13,26 @@ def random_ordering(i:int):
 class FARSEInfo:
 
     def __init__(self,parent_tmenv_idn,reference_timestamp,reference_timestamp_2,\
-        training_player_decision_index,target_hopseq):
+        current_timestamp,hollow_player_reference,training_player_decision_index,target_hopseq):
         self.pmi = parent_tmenv_idn
+
+        # master reference
         self.rt = reference_timestamp
+        # best reference
         self.rt2 = reference_timestamp_2
+        # hollow player at `rt2` 
+        self.hpr = hollow_player_reference
+        
+        self.current_timestamp = current_timestamp
         self.tpdi = training_player_decision_index
         self.th = target_hopseq
+
+        # timestamp, hop prior, 0 or 1
+        self.pl = performance_labels
+
+
+    def update_performance_labels(self):
+        return -1 
 
 
 """

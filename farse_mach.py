@@ -107,8 +107,7 @@ class HopStamp:
       def add_one_hop_info(self,tmenv_idn:int,next_tmenv_idn:int,hop:int,stdcontext_vec_seq,best_decision_index_seq):
             hi = HopInfo(tmenv_idn,next_tmenv_idn,hop,stdcontext_vec_seq,best_decision_index_seq)
             self.hop_infos[hop] = hi
-            return 
-
+            return
 
 """
 decision-tree learning system that applies trial-and-error 
@@ -135,7 +134,10 @@ class FARSE:
             self.ths = timestamp_hop_seq
             self.pf = perf_func
 
+            # [index of player @ start, idn of player]
             self.training_player = None
+
+            # [terminated status, status of cycle being finished for the timestamp]
             self.training_player_active = None  
             
             # initial index in tme, idn of player
@@ -152,14 +154,20 @@ class FARSE:
             self.tmp_cache = []    
             return
 
-      def initialize_FI_cache(self,tme:TMEnv):
-            return -1
+      def initialize_FI_cache(self):
+            self.load_training_info_into_TMEnv()
+            self.hopsearch_cache.append(deepcopy(self.tme))
 
       def mark_training_player(self,idn):
             q = self.tme.idn_to_index(idn)
             assert q != -1
             self.training_player = (q,idn)
             self.training_player_active = (True,False) 
+
+      def fetch_training_player(self):
+            assert type(self.training_player) != type(None)
+            index = self.tme.idn_to_index(self.training_player[1])
+            return self.tme.players[index]
 
       """
       only the training player is in verbose mode
@@ -191,7 +199,6 @@ class FARSE:
             # TODO: register info here
             self.restore_TMEnv_back_to_timestamp()
 
-
             # cycle until training player done
             while self.training_player_active[0] and \
                   not self.training_player_active[1]:
@@ -222,11 +229,14 @@ class FARSE:
             assert type(self.training_player) != type(None)
             parent_idn = deepcopy(self.tme.idn)
             self.set_TMEnv_idn()
+            self.load_training_info_into_TMEnv()
 
+                  ###
             print("** context move index")
             print(self.context_move_index)
             print("** tmp cache len")
             print(len(self.tmp_cache))
+                  ###
 
             # convert the ordering to identifiers
             idns = []
@@ -243,8 +253,27 @@ class FARSE:
                         if self.training_player_active[0] and not \
                               self.training_player_active[1]:
                               self.add_training_cycle_to_tmpcache()##parent_idn,dec_index)
-
             return 
+
+      def load_training_info_into_TMEnv(self):
+            p = self.fetch_training_player()
+            hp = p.hollow_player()
+
+            # case: FARSE has not started running
+            if type(self.tme_pre) == None:
+                  self.tme.fi = FARSEInfo(None,self.timestamp_counter,self.timestamp_counter,\
+                        self.timestamp_counter,hp,None,deepcopy(self.ths))
+                  return 
+
+
+            # case: FARSE already started running 
+            self.tme.fi.ct = self.timestamp_counter
+            self.tme.fi.pti = self.tme_pre.idn
+            if type(self.context_move_index[0]) == None:
+                  self.tme.fi.tpdi = 0
+            else:
+                  self.tme.fi.tpdi = self.context_move_index[0]
+            return
 
       def set_TMEnv_idn(self):
             self.tme.assign_idn(next(self.tmenv_counter))
@@ -259,9 +288,29 @@ class FARSE:
             return
 
       def review_tmp_cache(self):
+            scores = []
+            # score the performance
+            for (i,x) in enumerate(self.tmpcache):
+                  score = self.review_tme(x)
+                  scores.append((i,score))
 
+            ## NOTE: determine the best move based on
+            ##       references. 
+            """
+            x = max(scores,key=lambda y: y[1])
+            """
             return -1
 
+      """
+      outputs the score for the tme
+      """
+      def review_tme(self,tme):
+
+            # get the score
+            px = tme.idn_to_player(self.training_player[1])
+            assert type(px) != type(None)
+            return self.pf(tme.fi.hpr,px)
+            
       """
       return:
       - player active, False or ?if training player?finished?
@@ -270,7 +319,6 @@ class FARSE:
             print("moving player: ", p_idn, " | next iter: ", next_iter) 
             print("")
             assert type(self.training_player) != type(None)
-
             q = self.tme.idn_to_index(p_idn)
 
             # player has been terminated
@@ -308,8 +356,18 @@ class FARSE:
       """
       call this at the end of each 
       """
-      def fetch_relevant_info_on_timestamp(self):
-            return -1
+      def clear_TMEnv_data(self):
+            assert type(self.training_player) != type(None)
+            # store the pcontext of training player into variable
+            i = self.tme.idn_to_index(self.training_player[1])
+            pc = self.tme.players[i].pdec.pcontext
+
+            # clear all timestamp data
+            self.tme.clear_timestamp_data()
+
+            # upload PContext back into training player
+            self.tme.players[i].pdec.pcontext = pc
+            return
 
       # compares two timestamps, r (reference) and 
       # p (post) to determine how the player has fared
@@ -330,11 +388,7 @@ class FARSE:
       #############################################
 
       def process_timestamps(self):
-
             return -1
-
-      def score_training_player_performance(self):
-            return -1 
 
       """
       record context of training player into BallComp instance
