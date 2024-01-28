@@ -1,6 +1,8 @@
-from trapmatch_env import * 
+##from trapmatch_env import * 
+from sample_classes import * 
 import unittest
 
+"""
 def TMEnv_sample_1(verbose_mode=False):
     i = 81#4
     num_players = 3
@@ -13,6 +15,7 @@ def TMEnv_sample_1(verbose_mode=False):
     tme = TMEnv.generate__type_dumb(i,num_players,num_moves_range,\
         drange,connectivity_range,excess_range,game_modes,verbose_mode)
     return tme
+"""
 
 def check_defint_for_TMEnv__exact_MG_match(tme:TMEnv):
     s = set([p.idn for p in tme.players])

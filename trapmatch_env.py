@@ -23,17 +23,26 @@ class FARSEInfo:
         # hollow player at `rt2` 
         self.hpr = hollow_player_reference
         
-        self.current_timestamp = current_timestamp
+        self.ct = current_timestamp
         self.tpdi = training_player_decision_index
         self.th = target_hopseq
 
-        # timestamp, hop prior, 0 or 1
-        self.pl = performance_labels
+        # sequence of PContext of length `current_timestamp - rt2`
+        self.pcontext_seq = []
 
+        # timestamp, hop prior, 0 or 1
+        #3self.pl = performance_labels
+
+    def __str__(self):
+        s = "* reference timestamp: " + str(self.rt) + "\n"
+        s += "* reference timestamp #2: " + str(self.rt2) + "\n"
+        s += "* current timestamp: " + str(self.ct) + "\n"
+        s += "* target hop seq: " + str(self.th) + "\n"
+        s += "* length of pcontext seq: " + str(len(self.pcontext_seq)) + "\n"
+        return s
 
     def update_performance_labels(self):
         return -1 
-
 
 """
 environment for the trap-matching multi-player
@@ -118,7 +127,6 @@ class TMEnv:
         return
 
     def move_type_deterministic_assignment(self,move_types):
-
         for p in self.players:
             p.move_type_deterministic = deepcopy(move_types)
 

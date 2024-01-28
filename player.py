@@ -348,6 +348,15 @@ class PContext:
         self.mmove_prediction = x
         return
 
+
+    ########## methods to be used for <FARSE>
+
+    def set_selection_descriptor(self,pcd_ranking_index:int):
+        assert len(self.pcd.ranking) > pcd_ranking_index
+        q = self.pcd.ranking[pcd_ranking_index][0]
+        self.selection_descriptor = deepcopy(q)
+        return
+
 class PContextMapper:
 
     def __init__(self,sdf:StdDecFunction,context_file=None):
@@ -1618,6 +1627,7 @@ class Player:
         x = deepcopy(pcd.ranking[0])
         return x
 
+    
     """
     rd := (str,float), see description for method `PContextDecision.to_one_vec`
     

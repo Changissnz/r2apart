@@ -40,3 +40,6 @@ class PlayerAssetsFileClass(unittest.TestCase):
         
         ##print(q[2][0])
         return
+
+if __name__ == '__main__':
+    unittest.main()

@@ -2,7 +2,7 @@
 from trapmatch_env import *
 from morebs2 import ball_comp_test_cases,ball_comp,violation_handler
 
-DEFAULT_TS_HOP_SEQ = [2,3,6]
+DEFAULT_TS_HOP_SEQ = [1,2,3,5]
 
 # TODO: this is a basic function
 """
@@ -79,35 +79,7 @@ def control_point_capture_on_PContextDecision(pcd:PContextDecision):
             cxs.extend(cx) 
       return cxs
 
-"""
-class stores an element of <FARSE>'s trials to be written to the data file
-"""
-class HopInfo:
 
-      def __init__(self,tmenv_idn:int,next_tmenv_idn:int,hop:int,stdcontext_vec_seq,best_decision_index_seq):
-            self.tmenv_idn = tmenv_idn
-            self.next_tmenv_idn = next_tmenv_idn
-            self.hop = hop
-            self.stdcontext_vec_seq = stdcontext_vec_seq
-            self.best_decision_index_seq = best_decision_index_seq
-            return
-
-"""
-the data structure used to store hop sequence information for a
-<FARSE>'s `training_player`.
-"""
-class HopStamp:
-
-      def __init__(self,reference_timestamp,hop_seq):
-            self.reference_timestamp = reference_timestamp
-            self.hop_seq = hop_seq
-            self.hop_infos = defaultdict(None)
-            return 
-
-      def add_one_hop_info(self,tmenv_idn:int,next_tmenv_idn:int,hop:int,stdcontext_vec_seq,best_decision_index_seq):
-            hi = HopInfo(tmenv_idn,next_tmenv_idn,hop,stdcontext_vec_seq,best_decision_index_seq)
-            self.hop_infos[hop] = hi
-            return
 
 """
 decision-tree learning system that applies trial-and-error 
@@ -232,10 +204,12 @@ class FARSE:
             self.load_training_info_into_TMEnv()
 
                   ###
+            """
             print("** context move index")
             print(self.context_move_index)
             print("** tmp cache len")
             print(len(self.tmp_cache))
+            """
                   ###
 
             # convert the ordering to identifiers
@@ -260,19 +234,21 @@ class FARSE:
             hp = p.hollow_player()
 
             # case: FARSE has not started running
-            if type(self.tme_pre) == None:
+            if type(self.tme_pre) == type(None):
                   self.tme.fi = FARSEInfo(None,self.timestamp_counter,self.timestamp_counter,\
                         self.timestamp_counter,hp,None,deepcopy(self.ths))
                   return 
 
-
             # case: FARSE already started running 
-            self.tme.fi.ct = self.timestamp_counter
+            self.tme.fi.ct = self.timestamp_counter + 1
             self.tme.fi.pti = self.tme_pre.idn
-            if type(self.context_move_index[0]) == None:
-                  self.tme.fi.tpdi = 0
-            else:
-                  self.tme.fi.tpdi = self.context_move_index[0]
+            """
+            index = 0 if type(self.context_move_index[0]) == type(None) else \
+                  self.context_move_index[0]
+            p.pdec.pcontext.set_selection_descriptor(index)
+            self.tme.fi.pcontext_seq.append(deepcopy(p.pcontext))
+            """
+
             return
 
       def set_TMEnv_idn(self):
@@ -283,7 +259,16 @@ class FARSE:
       adds the TMEnv to cache and determines if it is the best solution
       """
       def add_training_cycle_to_tmpcache(self):
-            # 
+            #
+            p = self.fetch_training_player()
+            index = 0 if type(self.context_move_index[0]) == type(None) else \
+                  self.context_move_index[0]
+            try:
+                  p.pdec.pcontext.set_selection_descriptor(index)
+            except:
+                  return
+            
+            self.tme.fi.pcontext_seq.append(deepcopy(p.pdec.pcontext))
             self.tmp_cache.append(deepcopy(self.tme))
             return
 
@@ -369,17 +354,12 @@ class FARSE:
             self.tme.players[i].pdec.pcontext = pc
             return
 
-      # compares two timestamps, r (reference) and 
-      # p (post) to determine how the player has fared
-      # due in part to its decisions. 
-      def compare_timestamps(self,r,p):
-            return -1
+      ############################################
 
       def select_best_decision_at_timestamp(self):
             return -1
 
       """
-
       """
       def cache_candidate_selection(self,size=1):
 
