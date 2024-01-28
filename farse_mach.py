@@ -79,7 +79,19 @@ def control_point_capture_on_PContextDecision(pcd:PContextDecision):
             cxs.extend(cx) 
       return cxs
 
+class FARSESearchBestSolutions:
 
+      """
+      map is
+            TMEnv identifier -> hop length -> (best score, <PContext seq.>)
+      """
+      def __init__(self,defdict=defaultdict(None)):
+            self.defdict = defdict
+
+      """
+      """
+      def process_tmenv(self,tmenv):
+            return -1
 
 """
 decision-tree learning system that applies trial-and-error 
