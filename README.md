@@ -6,7 +6,7 @@ Synchronicity of variable networks based on shared payoff rules in multi-agent g
 
 # Running the tests
 - all the tests 
-`python3 -m unittest discover tests`
+`python3 -m unittest discover tests`  
 https://stackoverflow.com/questions/1732438/how-do-i-run-all-python-unit-tests-in-a-directory
 - single files
 `python3 -m unittest tests/FILENAME.py`
@@ -72,6 +72,11 @@ note#2
 ------
 - Trimmed down the runtime for the 
 first 5 timestamps to under 2 minutes.
+
+# Update: 1/30/2024
+
+- The `FARSE` training algorithm is well 
+underway in construction.
 
 # License?
 Copyright 2023 Richard Pham.
