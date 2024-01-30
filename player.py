@@ -101,12 +101,12 @@ def ne_intersection(ne_addition_seq):
     if len(ne_addition_seq) == 0:
         return []
 
-    q0 = ne_addition_seq[0][0]
-    q1 = ne_addition_seq[0][1]
+    q0 = set(ne_addition_seq[0][0])
+    q1 = set(ne_addition_seq[0][1])
 
     for i in range(1,len(ne_addition_seq)):
-        q0 = q0 & ne_addition_seq[i][0]
-        q1 = q1 & ne_addition_seq[i][1]
+        q0 = q0 & set(ne_addition_seq[i][0])
+        q1 = q1 & set(ne_addition_seq[i][1])
     return (q0,q1)
 
 """
@@ -1070,7 +1070,7 @@ class Player:
                 return i
         return index
 
-    def cumulative_RG_health():
+    def cumulative_RG_health(self):
         return self.rg.cumulative_health()
 
     def cumulative_health(self):
@@ -1106,8 +1106,15 @@ class Player:
         if self.verbose: print("\t* GAUGING: MMove")
 
         # get the minumum health
-        mnh = min([v for v in self.rg.node_health_map.values()])
-        meh = min([v for v in self.rg.edges_health_map.values()])
+        if len(self.rg.node_health_map) == 0:
+            mnh = 0
+        else:
+            mnh = min([v for v in self.rg.node_health_map.values()])
+        
+        if len(self.rg.edges_health_map) == 0:
+            meh = 0
+        else:
+            meh = min([v for v in self.rg.edges_health_map.values()])
 
         # get the mmove payoff
         x = [(m.pm_idn,m.payoff) for m in self.ms]
@@ -1403,7 +1410,13 @@ class Player:
         if mmove.move_type == "MInfo#1":
             # fetch the node and edge additions from PInfo
             pm_idn = mmove.move_data[0]
-            q = self.pdec.pcontext.pmove_prediction[pm_idn][self.idn].ne_additions
+            ##?? 
+            q0,q1 = [],[]
+            if pm_idn in self.pdec.pcontext.pmove_prediction:
+                if self.idn in self.pdec.pcontext.pmove_prediction[pm_idn]:
+                    q = self.pdec.pcontext.pmove_prediction[pm_idn][self.idn].ne_additions
+                    q0,q1 = q[0],q[1]
+            ##q = self.pdec.pcontext.pmove_prediction[pm_idn][self.idn].ne_additions
             self.default_NE_addition_operation(q[0],q[1])
             return
         elif mmove.move_type == "MInfo#2":
@@ -1432,11 +1445,6 @@ class Player:
 
     def default_NE_withdrawal_operation(self,node_set,edge_set):
 
-        for n in node_set:
-            v = self.rg.node_health_map[n]
-            self.rg.delete_node(n)
-            self.excess += v
-
         while len(edge_set) > 0: 
             x = edge_set.pop() 
 
@@ -1453,6 +1461,13 @@ class Player:
             self.rg.delete_edge(x2)
             if x2 in self.rg.edges_health_map:
                 edge_set = edge_set - {x2}
+
+        for n in node_set:
+            v = self.rg.node_health_map[n]
+            self.rg.delete_node(n)
+            self.excess += v
+
+        
         return
 
     #############################################################

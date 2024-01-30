@@ -30,11 +30,9 @@ class FARSEInfo:
         # sequence of PContext of length `current_timestamp - rt2`
         self.pcontext_seq = []
 
-        # timestamp, hop prior, 0 or 1
-        #3self.pl = performance_labels
-
     def __str__(self):
-        s = "* reference timestamp: " + str(self.rt) + "\n"
+        s = "* parent idn: " + str(self.pmi) + "\n"
+        s += "* reference timestamp: " + str(self.rt) + "\n"
         s += "* reference timestamp #2: " + str(self.rt2) + "\n"
         s += "* current timestamp: " + str(self.ct) + "\n"
         s += "* target hop seq: " + str(self.th) + "\n"

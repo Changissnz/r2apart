@@ -185,6 +185,14 @@ default function used to calculate a d-network from the
 input rg
 """
 def rg_score_assignment_type_deception__default(rg_ref,rg_dec):
+    ##
+    """
+    print("NODES REF")
+    print(list(rg_ref.node_health_map.keys()))
+    print("NODES DEC")
+    print(list(rg_dec.node_health_map.keys()))
+    """
+    ##
 
     # assign rg_dec node health values
     for k in rg_dec.node_health_map.keys():
@@ -501,14 +509,31 @@ class ResourceGraph:
         mgx = MicroGraph(defaultdict(set))
         ns = set(mg_ref.dg.keys())
 
+        ## ??
+        """
+        print("BEFORE1:\n")
+        print(list(self.node_health_map.keys()))
+        print("BEFORE EDGES:\n")
+        print(list(self.edges_health_map.keys()))
+        print("BEFORE:\nREF\n", list(ns))
+        """
+        ## ?? 
+
         for (k,v) in mg_ref.dg.items():
             if k in deceptor_nodes:
-                mgx.dg[k] = ns - deepcopy(v)
+                mgx.dg[k] = deepcopy(ns) - deepcopy(v)
             else:
                 mgx.dg[k] = deepcopy(v)
     
         rgx = ResourceGraph.from_MicroGraph(mgx)
-        return rg_score_assignment_type_deception__default(self,rgx)
+        
+        ##
+        """
+        print("DEC")
+        print(list(rgx.node_health_map.keys()))
+        """
+        ##
+        return rg_score_assignment_type_deception__default(deepcopy(self),rgx)
 
     def edge_complement(self,score_assignment = rg_score_assignment_type1):
         # convert to MicroGraph and get all the edges
@@ -576,7 +601,17 @@ class ResourceGraph:
         return
 
     def delete_node(self,node_idn):
+        y = self.node_health_map[node_idn]
         del self.node_health_map[node_idn]
+
+        qs = [] 
+        for k in self.edges_health_map.keys():
+            s = k.split(",")
+            if s[0] == node_idn or s[1] == node_idn:
+                qs.append(k)
+        
+        for q in qs:
+            del self.edges_health_map[q]
         return
 
     def add_edge(self,edge_pair,edge_health):
@@ -627,10 +662,14 @@ class ResourceGraph:
     """
     def update_health_values(self,node_dm,edge_dm):
         for (k,v) in node_dm.items():
-            self.node_health_map[k] = self.node_health_map[k] + v
+            ## ??
+            if k in self.node_health_map:
+                self.node_health_map[k] = self.node_health_map[k] + v
 
         for (k,v) in edge_dm.items():
-            self.edges_health_map[k] = self.edges_health_map[k] + v
+            ## ?? 
+            if k in self.edges_health_map:
+                self.edges_health_map[k] = self.edges_health_map[k] + v
         return
 
     """
@@ -678,8 +717,16 @@ class ResourceGraph:
     def ne_extremum(self):
         nl = list(self.node_health_map.values())
         el = list(self.edges_health_map.values()) 
-        q1 = (min(nl),max(nl))
-        q2 = (min(el),max(el))
+
+        if len(nl) == 0:
+            q1 = (0,0)
+        else:
+            q1 = (min(nl),max(nl))
+        
+        if len(el) == 0:
+            q2 = (0,0)
+        else:
+            q2 = (min(el),max(el))
         return (q1,q2)
 
     ############################ isomorphism functions ################
@@ -873,6 +920,8 @@ class ResourceGraph:
         
         self.set_nic()
         nmap = self.nearest_partial_n2n_map(wanted_graph,reversos)
+        if type(nmap) == type(None):
+            return [],[]
 
         # for each of the values that are question marks, reassign it as
         # a stringized integer

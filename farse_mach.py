@@ -83,16 +83,44 @@ class FARSESearchBestSolutions:
 
       """
       map is
-            TMEnv identifier -> hop length -> (best score, <PContext seq.>)
+            TMEnv parent identifier -> hop length -> (best score, <PContext seq.>)
       """
-      def __init__(self,defdict=defaultdict(None)):
+      def __init__(self,defdict=defaultdict(defaultdict)):
             self.defdict = defdict
 
       """
+      return:
+      - is best solution, valid next hop
       """
-      def process_tmenv(self,tmenv):
-            return -1
+      def process_tmenv(self,tmenv,score):
+            assert len(tmenv.fi.th) > 0
 
+            next_hop = tmenv.fi.th[0]
+            max_hop = tmenv.fi.th[-1]
+
+            # check if the timestamp differences match
+            diff = tmenv.fi.ct - tmenv.fi.rt2
+            q = next_hop - diff
+            assert q == 0
+
+            if q == 0:
+                  ##print("PMI: ", tmenv.fi.pmi)
+                  if tmenv.fi.pmi not in self.defdict:
+                        self.defdict[tmenv.fi.pmi] = defaultdict(None)
+                  if next_hop not in self.defdict[tmenv.fi.pmi]:
+                        self.defdict[tmenv.fi.pmi][next_hop] = - float('inf')
+
+                  # case: better solution
+                  if score > self.defdict[tmenv.fi.pmi][next_hop]:
+                        self.defdict[tmenv.fi.pmi][next_hop] = score
+                        return True, True
+                  return False,True
+            else:
+                  if q + tmenv.fi.ct > tmenv.fi.rt + max_hop:
+                        return False,False
+                  return False,True
+
+## have to process by (TMEnv parent, hop)
 """
 decision-tree learning system that applies trial-and-error 
 principles alongside metrological functions.
@@ -135,7 +163,13 @@ class FARSE:
             self.reference_timestamp = None 
 
             self.hopsearch_cache = []
-            self.tmp_cache = []    
+            self.tmp_cache = []
+            self.dec_cache = []
+
+            self.fsbs = FARSESearchBestSolutions()
+
+            # TMEnv idn, hop
+            self.cache_target = [None,None]
             return
 
       def initialize_FI_cache(self):
@@ -166,7 +200,28 @@ class FARSE:
       """
       def run_one_hop_round(self):
             # set reference timestamp here.
-            return -1
+            if len(self.hopsearch_cache) == 0:
+                  return False
+
+            self.tme = deepcopy(self.hopsearch_cache.pop(0))
+            self.trial_move_one_timestamp()
+
+            # variable to reset timestamp
+            timestamp_marker = len(self.tmp_cache)
+            c = 0
+            while len(self.tmp_cache) > 0:
+                  self.tme = deepcopy(self.tmp_cache.pop(0))
+                  self.trial_move_one_timestamp()
+                  c += 1
+
+                  if c != timestamp_marker:
+                        self.timestamp_counter -= 1
+                  else:
+                        print("next timestamp: ",self.timestamp_counter)
+                        c = 0
+                        timestamp_marker = len(self.tmp_cache)
+            self.review_dec_cache()
+            return
 
       def trial_move_one_timestamp(self):
             
@@ -234,11 +289,12 @@ class FARSE:
                   # case: is training_player
                   if idn == self.training_player[1]: 
                         self.training_player_active = (stat1,stat2)
-                        dec_index = self.context_move_index[0] -1 
+                        ##dec_index = self.context_move_index[0] -1 
 
-                        if self.training_player_active[0] and not \
-                              self.training_player_active[1]:
-                              self.add_training_cycle_to_tmpcache()##parent_idn,dec_index)
+            if self.training_player_active[0] and not \
+                  self.training_player_active[1]:
+                  self.add_training_cycle_to_tmpcache()##parent_idn,dec_index)
+
             return 
 
       def load_training_info_into_TMEnv(self):
@@ -253,7 +309,7 @@ class FARSE:
 
             # case: FARSE already started running 
             self.tme.fi.ct = self.timestamp_counter + 1
-            self.tme.fi.pti = self.tme_pre.idn
+            self.tme.fi.pmi = self.tme_pre.idn
             """
             index = 0 if type(self.context_move_index[0]) == type(None) else \
                   self.context_move_index[0]
@@ -268,7 +324,8 @@ class FARSE:
             return
 
       """
-      adds the TMEnv to cache and determines if it is the best solution
+      adds the TMEnv instance loaded into `self.tme` and checks if
+      dec_cache or tmp_cache. 
       """
       def add_training_cycle_to_tmpcache(self):
             #
@@ -278,25 +335,63 @@ class FARSE:
             try:
                   p.pdec.pcontext.set_selection_descriptor(index)
             except:
+                  print("index {} out of bounds".format(index))
                   return
-            
+
+            assert len(self.tme.fi.th) > 0
+
+            # update the PContext seq
             self.tme.fi.pcontext_seq.append(deepcopy(p.pdec.pcontext))
-            self.tmp_cache.append(deepcopy(self.tme))
+
+            # check if length of next hop
+            if self.tme.fi.ct - self.tme.fi.rt2 == self.tme.fi.th[0]:
+                  self.dec_cache.append(deepcopy(self.tme))
+            else:
+                  self.tmp_cache.append(deepcopy(self.tme))
             return
 
-      def review_tmp_cache(self):
-            scores = []
+      def review_dec_cache(self):
+            ##print("REVIEWING")
+            best_tme_index = None
             # score the performance
-            for (i,x) in enumerate(self.tmpcache):
+            for (i,x) in enumerate(self.dec_cache):
                   score = self.review_tme(x)
-                  scores.append((i,score))
+                  ##print("score: ",score)
+                  stat1,stat2 = self.fsbs.process_tmenv(x,score)
 
-            ## NOTE: determine the best move based on
-            ##       references. 
-            """
-            x = max(scores,key=lambda y: y[1])
-            """
-            return -1
+                  # invalid next hop
+                  if not stat2:
+                        continue
+
+                  # best solution so far
+                  if stat1: 
+                        best_tme_index = i
+
+            # add the best solution back to `hopsearch_cache`
+            if type(best_tme_index) == type(None):
+                  print("NO BEST SOLUTION")
+                  return
+
+                  # update the hollow player
+            tme = self.dec_cache.pop(best_tme_index)
+            p = self.fetch_training_player()
+            tme.fi.hpr = p.hollow_player()
+            print("BEST SOLUTION")
+            print(str(tme.fi))
+            print()
+            
+            self.hopsearch_cache.append(tme)
+
+            # for the remaining solutions, add them back to tmp_cache
+            l = len(self.dec_cache)
+            self.tmp_cache = self.dec_cache
+            self.dec_cache = [] 
+
+            for x in self.tmp_cache:
+                  x.fi.th = x.fi.th[1:]
+
+            ## ?? REMOVE
+            assert len(self.tmp_cache) == l
 
       """
       outputs the score for the tme
