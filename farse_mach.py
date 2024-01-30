@@ -376,10 +376,11 @@ class FARSE:
             tme = self.dec_cache.pop(best_tme_index)
             p = self.fetch_training_player()
             tme.fi.hpr = p.hollow_player()
+            tme.fi.rt2 = tme.fi.ct
             print("BEST SOLUTION")
             print(str(tme.fi))
             print()
-            
+
             self.hopsearch_cache.append(tme)
 
             # for the remaining solutions, add them back to tmp_cache

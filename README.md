@@ -5,8 +5,12 @@ Synchronicity of variable networks based on shared payoff rules in multi-agent g
 `UNFINISHED DEVELOPMENT OF GAME`.
 
 # Running the tests
-python3 -m unittest discover tests
+- all the tests 
+`python3 -m unittest discover tests`
 https://stackoverflow.com/questions/1732438/how-do-i-run-all-python-unit-tests-in-a-directory
+- single files
+`python3 -m unittest tests/FILENAME.py`
+
 
 # Broad Overview
 Development of project has hit a "brick 
