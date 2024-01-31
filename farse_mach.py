@@ -120,6 +120,16 @@ class FARSESearchBestSolutions:
                         return False,False
                   return False,True
 
+      """
+      
+      """
+      def write_PContexts_out_to_file(self,tmenv,fp):
+            return -1
+
+      def write_context_out_to_file(self):
+
+            return -1
+
 ## have to process by (TMEnv parent, hop)
 """
 decision-tree learning system that applies trial-and-error 

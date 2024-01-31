@@ -55,5 +55,21 @@ class FARSEClass(unittest.TestCase):
         assert len(fm.dec_cache) == 0
         return
 
+    def test__FARSE__run_one_hop_round__case_2(self):
+        tme = TMEnv_sample_1()
+        tme.set_player_verbosity(False)
+        ths = [2,4,5]
+
+        fm = FARSE(tme,timestamp_hop_seq = ths,perf_func = basic_performance_function)
+        fm.mark_training_player("0")
+        fm.initialize_FI_cache()
+        fm.run_one_hop_round()
+
+        assert len(fm.hopsearch_cache) == 1
+        assert len(fm.tmp_cache) == 135
+        assert len(fm.dec_cache) == 0
+
+ 
+
 if __name__ == '__main__':
     unittest.main()
