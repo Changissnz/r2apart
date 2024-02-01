@@ -489,10 +489,12 @@ class TMEnv:
         q = DEFAULT_TRAINING_FOLDER + fp
         f = open(q,write_mode)
         pickle.dump(self,f)
+        f.close()
 
     @staticmethod
     def open_state(fp):
         f = open(DEFAULT_TRAINING_FOLDER + fp,"rb")
         q = pickle.load(f)
         assert type(q) == TMEnv, "type {} is not <TMEnv>".format(type(q))
+        f.close()
         return q

@@ -1,83 +1,7 @@
 # the FARSE machine, used to train players to make better moves. 
-from trapmatch_env import *
-from morebs2 import ball_comp_test_cases,ball_comp,violation_handler
+from farse_mach_writer import *
 
 DEFAULT_TS_HOP_SEQ = [1,2,3,5]
-
-# TODO: this is a basic function
-"""
-return:
-- float value, larger values correspond to better performance
-"""
-def basic_performance_function(player_pre,player_post):
-      assert type(player_pre) == type(player_post)
-      assert type(player_pre) == Player
-
-      h1 = player_post.cumulative_health()
-      h0 = player_pre.cumulative_health() 
-      
-      # calculate difference in health
-      diff = h1 - h0 
-
-      # add difference to post-health
-      return h1 + diff
-
-def std_dev(seq,meen):
-      if len(seq) == 0:
-            return 0
-      diff = [(s - mean) ** 2 for s in seq] 
-      return mean_safe_division(diff) 
-
-"""
-return:
-- all control point values are normalized to the smallest non-zero number.
-"""
-def normalized_context_function(quad):
-      assert len(quad) == 4
-      q2 = [q for q in quad if abs(q) > 0]
-      q2 = min(q2)
-      return [q / q2 for q in quad]
-
-def is_pertinent_timestamp(ts,hop_seq):
-      # case: timestamp an element of hop_seq
-      if ts in hop_seq:
-            return True
-      #h = 
-      return -1
-
-"""
-control points are: mean, min, max, and std. dev. 
-
-For every one of the types found in STD_DEC_WEIGHT_SEQLABELS,
-calculates control points.
-
-Control point captures are used for <BallComp> classifications.
-
-return: 
-- sequence of float values
-"""
-def control_point_capture_on_PContextDecision(pcd:PContextDecision):
-
-      """
-      """
-      def calculate_control_points(subseq):
-            subseq2 = [s[1] for s in subseq]
-            if len(subseq2) == 0:
-                  return 0,0,0,0
-            q = [mean_safe_division(subseq2)]
-            q.append(min(subseq2))
-            q.append(max(subseq2))
-            q.append(std_dev(subseq2,q[0]))
-            return q
-
-      cxs = []
-      for x in STD_DEC_WEIGHT_SEQLABELS:
-            indices = pcd.indices_for_possible_move_type(x)
-            q = [pcd.ranking[i] for i in indices]
-            cx = calculate_control_points(subseq)
-            cx = normalized_context_function(cx)
-            cxs.extend(cx) 
-      return cxs
 
 class FARSESearchBestSolutions:
 
@@ -123,10 +47,10 @@ class FARSESearchBestSolutions:
       """
       
       """
-      def write_PContexts_out_to_file(self,tmenv,fp):
+      def write_PContexts_out_to_file(self,tmenv,hop,fp):
             return -1
 
-      def write_context_out_to_file(self):
+      def write_context_out_to_file(self,tmenv,hop,fp):
 
             return -1
 
@@ -150,11 +74,13 @@ and stands for:
 """
 class FARSE:
 
-      def __init__(self,tmenv,timestamp_hop_seq = DEFAULT_TS_HOP_SEQ,perf_func = basic_performance_function):
+      def __init__(self,tmenv,timestamp_hop_seq = DEFAULT_TS_HOP_SEQ,\
+            perf_func = basic_performance_function,filepaths=None):
             self.tme = tmenv
             self.tme_pre = None
             self.ths = timestamp_hop_seq
             self.pf = perf_func
+            self.filepaths = filepaths
 
             # [index of player @ start, idn of player]
             self.training_player = None

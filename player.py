@@ -134,6 +134,7 @@ class PContext:
         # descriptor for the selection
         self.selection_descriptor = None 
 
+        self.idn = None
         return 
 
     ###################### display and write methods
