@@ -81,6 +81,7 @@ class FARSE:
             self.ths = timestamp_hop_seq
             self.pf = perf_func
             self.filepaths = filepaths
+            self.fwriter = None
 
             # [index of player @ start, idn of player]
             self.training_player = None
@@ -106,6 +107,19 @@ class FARSE:
 
             # TMEnv idn, hop
             self.cache_target = [None,None]
+            return
+
+      def preprocess(self,training_player_idn):
+            self.mark_training_player(training_player_idn)
+            self.initialize_FI_cache()
+            self.initialize_writer()
+            return -1
+
+      def initialize_writer(self):
+            if type(self.filepaths) == type(None):
+                  print("no filepaths for writer")
+            self.fwriter = FARSEWriter(self.filepaths[0],\
+                  self.filepaths[1],self.filepaths[2])
             return
 
       def initialize_FI_cache(self):
@@ -397,25 +411,3 @@ class FARSE:
             # upload PContext back into training player
             self.tme.players[i].pdec.pcontext = pc
             return
-
-      ############################################
-
-      def select_best_decision_at_timestamp(self):
-            return -1
-
-      """
-      """
-      def cache_candidate_selection(self,size=1):
-
-            return -1
-
-      #############################################
-
-      def process_timestamps(self):
-            return -1
-
-      """
-      record context of training player into BallComp instance
-      """
-      def log_context(self):
-            return -1
