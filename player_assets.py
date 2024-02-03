@@ -680,9 +680,10 @@ class PContextDecision:
     def indices_for_possible_move_type(self, wanted_move_type):
         assert wanted_move_type in STD_DEC_WEIGHT_SEQLABELS
         indices = []
+        print("move type: {}".format(wanted_move_type))
         for (i,x) in enumerate(self.ranking): 
-            q = "-".split(x[0])
-            q = q[0]
+            q = x[0].split("-")[0]
+            ##print("got {} want {}".format(q,wanted_move_type))
             if q == wanted_move_type:
                 indices.append(i)
         return indices

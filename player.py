@@ -152,6 +152,8 @@ class PContext:
             d[k] = deepcopy(v[pidn].ne_additions)
         return d
 
+    # TODO: wrong!
+    """
     def condensed_form(self,reduced_form:bool):
         q = []
 
@@ -175,6 +177,7 @@ class PContext:
         else:
             q.append(None)
         return q
+    """
 
     ###### processor for decision function
 

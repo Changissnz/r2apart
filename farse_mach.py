@@ -118,8 +118,11 @@ class FARSE:
       def initialize_writer(self):
             if type(self.filepaths) == type(None):
                   print("no filepaths for writer")
+                  return
             self.fwriter = FARSEWriter(self.filepaths[0],\
                   self.filepaths[1],self.filepaths[2])
+            self.fwriter.preprocess()
+
             return
 
       def initialize_FI_cache(self):
@@ -318,6 +321,8 @@ class FARSE:
                         best_tme_index = i
 
             # add the best solution back to `hopsearch_cache`
+            # as two copies, one with the previous hop and one
+            # without 
             if type(best_tme_index) == type(None):
                   print("NO BEST SOLUTION")
                   return
@@ -331,7 +336,13 @@ class FARSE:
             print(str(tme.fi))
             print()
 
+            q = tme.fi.th[0]
             self.hopsearch_cache.append(tme)
+            self.write_to_file(tme,q)
+            
+            tme2 = deepcopy(tme)
+            tme2.fi.th = tme2.fi.th[1:]
+            self.hopsearch_cache.append(tme2)
 
             # for the remaining solutions, add them back to tmp_cache
             l = len(self.dec_cache)
@@ -343,6 +354,13 @@ class FARSE:
 
             ## ?? REMOVE
             assert len(self.tmp_cache) == l
+
+      def write_to_file(self,tme,hop_length):
+            if type(self.fwriter) == type(None):
+                  print("no file-write")
+                  return
+            self.fwriter.write_TME_to_file(tme,hop_length)
+            return
 
       """
       outputs the score for the tme

@@ -1,8 +1,8 @@
 from trapmatch_env import *
 from morebs2 import ball_comp_test_cases,ball_comp,violation_handler
 import os
-import pandas as pd
-
+import csv 
+import shutil
 
 # TODO: this is a basic function
 """
@@ -25,7 +25,7 @@ def basic_performance_function(player_pre,player_post):
 def std_dev(seq,meen):
       if len(seq) == 0:
             return 0
-      diff = [(s - mean) ** 2 for s in seq] 
+      diff = [(s - meen) ** 2 for s in seq] 
       return mean_safe_division(diff) 
 
 """
@@ -33,10 +33,12 @@ return:
 - all control point values are normalized to the smallest non-zero number.
 """
 def normalized_context_function(quad):
-      assert len(quad) == 4
-      q2 = [q for q in quad if abs(q) > 0]
-      q2 = min(q2)
-      return [q / q2 for q in quad]
+    assert len(quad) == 4
+    q2 = [q for q in quad if abs(q) > 0]
+    q2 = min(q2) if len(q2) > 0 else 0
+    if q2 == 0:
+        return [0,0,0,0]
+    return [q / q2 for q in quad]
 
 """
 control points are: mean, min, max, and std. dev. 
@@ -49,7 +51,7 @@ Control point captures are used for <BallComp> classifications.
 return: 
 - sequence of float values
 """
-def control_point_capture_on_PContextDecision(pcd:PContextDecision):
+def control_point_capture_on_PContextDecision(pc:PContext):
 
       """
       """
@@ -64,9 +66,11 @@ def control_point_capture_on_PContextDecision(pcd:PContextDecision):
             return q
 
       cxs = []
+      print("PCD LENGTH: {}".format(len(pc.pcd.ranking)))
       for x in STD_DEC_WEIGHT_SEQLABELS:
-            indices = pcd.indices_for_possible_move_type(x)
-            q = [pcd.ranking[i] for i in indices]
+            indices = pc.pcd.indices_for_possible_move_type(x)
+            subseq = [pc.pcd.ranking[i] for i in indices]
+            print("control points for {}: {}".format(x,indices))
             cx = calculate_control_points(subseq)
             cx = normalized_context_function(cx)
             cxs.extend(cx) 
@@ -85,18 +89,25 @@ class FARSEWriter:
         self.file_idn_counter = DefaultNodeIdnCounter("0")
         self.context_idn_counter = DefaultNodeIdnCounter("0")
         self.bookmark_file = None
+        self.vfile_writer = None
+        self.vfile = None
 
     def preprocess(self,overwrite=True):
         self.make_dir(overwrite)
         self.declare_bookmark_file()
-        with open(self.folder_path + "/" + self.fp2,"w") as fi:
-            return 
+        q = self.folder_path + "/" + self.fp2
+        self.vfile = open(q,"w")
+        self.vfile_writer = csv.writer(self.vfile,delimiter=",")
         return
 
     def make_dir(self,overwrite=True):
         stat = os.path.exists(self.folder_path)
         if not stat and not overwrite:
             raise ValueError("folder already exists!")
+        print("making dir")
+        if stat and overwrite:
+            if os.path.exists(self.folder_path):
+                shutil.rmtree(self.folder_path)
         os.makedirs(self.folder_path)
         return
 
@@ -108,6 +119,8 @@ class FARSEWriter:
     def write_TME_to_file(self,tme,hop_length:int):
         # write out PContext sequence and capture vectors
         # into list
+        print("write hop length: ", hop_length)
+
         assert len(tme.fi.pcontext_seq) >= hop_length
         q = deepcopy(tme.fi.pcontext_seq[-hop_length:])
         fi_idn = next(self.file_idn_counter)
@@ -115,6 +128,14 @@ class FARSEWriter:
 
         vecs = []
         for q_ in q:
+            """
+            print("-- context")
+            print(q_.condensed_form(False))
+            """
+            print("-- context seq")
+            print(q_.pcd.to_one_vec())
+            print()
+
             idn = next(self.context_idn_counter)
             q_.idn = idn
             idns.append(idn)
@@ -123,7 +144,7 @@ class FARSEWriter:
             v.insert(0,idn)
             vecs.append(v) 
 
-        f = open(self.folder_path + "/" + self.fp1,\
+        f = open(self.folder_path + "/" + self.fp1 + "-" + fi_idn,\
                 "wb")
         pickle.dump(q,f)
 
@@ -131,9 +152,22 @@ class FARSEWriter:
         self.write_to_bookmark(fi_idn,idns)    
 
         # write out vectorized forms
+        print("writing vecs")
+        print(vecs)
+        print()
+        for v in vecs:
+            self.vfile_writer.writerow(v)
+            print("---")
+            print(v)
+            print()
+
+        """
         df = pd.DataFrame(vecs)
         df.to_csv(path_or_bufstr = self.folder_path + "/" + self.fp2,\
                 mode="a")
+        """
+        self.flush_data()
+
         return
 
     def write_to_bookmark(self,file_idn,context_idn_seq):
@@ -142,8 +176,13 @@ class FARSEWriter:
         self.bookmark_file.write(q)
         return
 
+    def flush_data(self):
+        self.bookmark_file.flush()
+        self.vfile.flush()
+
     def end_write(self):
         self.bookmark_file.close()
+        self.vfile.close()
 
 class FARSEReader:
 
