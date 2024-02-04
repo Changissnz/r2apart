@@ -156,15 +156,16 @@ class FARSE:
             if len(self.hopsearch_cache) == 0:
                   return False
 
-            self.tme = deepcopy(self.hopsearch_cache.pop(0))
+            q = self.hopsearch_cache.pop(0)
+            self.tme = q 
             try:
                   self.mark_training_player(self.training_player[1])
             except:
                   print("training player has been terminated.")
-
-            print("running hop round on ")
-            print(str(self.tme.fi))
-
+            print("setting timestamp to TMEnv: {}".format(self.tme.fi.ct))
+            self.timestamp_counter = self.tme.fi.ct
+            print("remaining candidates: {}".format(len(self.hopsearch_cache)))
+            print("running hop round")
             self.trial_move_one_timestamp()
             print("length of tmp cache: {}".format(len(self.tmp_cache)))
             
@@ -274,6 +275,11 @@ class FARSE:
             # case: FARSE already started running 
             self.tme.fi.ct = self.timestamp_counter + 1
             self.tme.fi.pmi = self.tme_pre.idn
+
+            print("loading TMEnv with info")
+            print(str(self.tme.fi))
+
+
             """
             index = 0 if type(self.context_move_index[0]) == type(None) else \
                   self.context_move_index[0]
@@ -315,7 +321,8 @@ class FARSE:
             return
 
       def review_dec_cache(self):
-            ##print("REVIEWING")
+            print("REVIEWING")
+            print("LENGTH: ", len(self.hopsearch_cache))
             best_tme_index = None
             # score the performance
             for (i,x) in enumerate(self.dec_cache):
@@ -355,21 +362,12 @@ class FARSE:
             tme2.fi.th = tme2.fi.th[1:]
             self.hopsearch_cache.append(tme2)
 
-            # for the remaining solutions, add them back to tmp_cache
-            self.hopsearch_cache.extend(self.dec_cache)
-            self.dec_cache = []
-
-            """
-            l = len(self.dec_cache)
-            self.tmp_cache = self.dec_cache
-            self.dec_cache = [] 
-
-            for x in self.tmp_cache:
+            # for the remaining solutions, add them back to hopsearch_cache
+            for x in self.dec_cache:
                   x.fi.th = x.fi.th[1:]
 
-            ## ?? REMOVE
-            assert len(self.tmp_cache) == l
-            """
+            self.hopsearch_cache.extend(self.dec_cache)
+            self.dec_cache = []
 
       def write_to_file(self,tme,hop_length):
             if type(self.fwriter) == type(None):
