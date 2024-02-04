@@ -119,7 +119,9 @@ class FARSEWriter:
     def write_TME_to_file(self,tme,hop_length:int):
         # write out PContext sequence and capture vectors
         # into list
+        """
         print("write hop length: ", hop_length)
+        """
 
         assert len(tme.fi.pcontext_seq) >= hop_length
         q = deepcopy(tme.fi.pcontext_seq[-hop_length:])
@@ -152,20 +154,13 @@ class FARSEWriter:
         self.write_to_bookmark(fi_idn,idns)    
 
         # write out vectorized forms
+        """
         print("writing vecs")
         print(vecs)
         print()
+        """
         for v in vecs:
             self.vfile_writer.writerow(v)
-            print("---")
-            print(v)
-            print()
-
-        """
-        df = pd.DataFrame(vecs)
-        df.to_csv(path_or_bufstr = self.folder_path + "/" + self.fp2,\
-                mode="a")
-        """
         self.flush_data()
 
         return

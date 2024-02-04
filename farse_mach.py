@@ -157,8 +157,17 @@ class FARSE:
                   return False
 
             self.tme = deepcopy(self.hopsearch_cache.pop(0))
-            self.trial_move_one_timestamp()
+            try:
+                  self.mark_training_player(self.training_player[1])
+            except:
+                  print("training player has been terminated.")
 
+            print("running hop round on ")
+            print(str(self.tme.fi))
+
+            self.trial_move_one_timestamp()
+            print("length of tmp cache: {}".format(len(self.tmp_cache)))
+            
             # variable to reset timestamp
             timestamp_marker = len(self.tmp_cache)
             c = 0
@@ -231,6 +240,8 @@ class FARSE:
             print(len(self.tmp_cache))
             """
                   ###
+
+            print("cycling timestamp")
 
             # convert the ordering to identifiers
             idns = []
@@ -345,6 +356,10 @@ class FARSE:
             self.hopsearch_cache.append(tme2)
 
             # for the remaining solutions, add them back to tmp_cache
+            self.hopsearch_cache.extend(self.dec_cache)
+            self.dec_cache = []
+
+            """
             l = len(self.dec_cache)
             self.tmp_cache = self.dec_cache
             self.dec_cache = [] 
@@ -354,6 +369,7 @@ class FARSE:
 
             ## ?? REMOVE
             assert len(self.tmp_cache) == l
+            """
 
       def write_to_file(self,tme,hop_length):
             if type(self.fwriter) == type(None):
@@ -377,8 +393,13 @@ class FARSE:
       - player active, False or ?if training player?finished?
       """
       def trial_move_one_player(self,p_idn:str,next_iter:bool):
+            ##
+            """
             print("moving player: ", p_idn, " | next iter: ", next_iter) 
             print("")
+            """
+            ##
+
             assert type(self.training_player) != type(None)
             q = self.tme.idn_to_index(p_idn)
 

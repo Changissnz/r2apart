@@ -187,10 +187,17 @@ input rg
 def rg_score_assignment_type_deception__default(rg_ref,rg_dec):
     ##
     """
-    print("NODES REF")
+    print("REF")    
+    print("\tNODES")
     print(list(rg_ref.node_health_map.keys()))
-    print("NODES DEC")
+    print("\tEDGES")
+    print(list(rg_ref.edges_health_map.keys()))
+
+    print("DEC")
+    print("\tNODES")
     print(list(rg_dec.node_health_map.keys()))
+    print("\tEDGES")
+    print(list(rg_dec.edges_health_map.keys()))
     """
     ##
 
@@ -504,7 +511,8 @@ class ResourceGraph:
     used in the case of NegoChips, 
     """
     def deception_complement(self,deceptor_nodes):
-        # construct a new MicroGraph
+        # clean graph first, then construct a new MicroGraph
+        self.clean_graph()
         mg_ref = MicroGraph.from_ResourceGraph(self)
         mgx = MicroGraph(defaultdict(set))
         ns = set(mg_ref.dg.keys())
@@ -623,7 +631,8 @@ class ResourceGraph:
     def delete_edge(self,edge_pair):
         s = edge_pair.split(",")
         assert len(s) == 2
-        del self.edges_health_map[edge_pair] 
+        if edge_pair in self.edges_health_map:
+            del self.edges_health_map[edge_pair] 
         return
 
     def update_node(self,node,delta):
@@ -650,7 +659,9 @@ class ResourceGraph:
                 continue
             q = k.split(",")
             stat = q[0] in delnodes or q[1] in delnodes
-            if stat:
+            stat2 = q[0] not in self.node_health_map or \
+                q[1] not in self.node_health_map
+            if stat or stat2:
                 deledges |= {k}
 
         for x in delnodes: self.delete_node(x)

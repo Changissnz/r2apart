@@ -1405,6 +1405,7 @@ class Player:
             if q_ in self.rg.node_health_map:
                 f += self.rg.node_health_map[q_]
                 self.rg.delete_node(q_)
+        self.rg.clean_graph()
         return f 
 
     #############################################################
@@ -1421,7 +1422,7 @@ class Player:
                     q = self.pdec.pcontext.pmove_prediction[pm_idn][self.idn].ne_additions
                     q0,q1 = q[0],q[1]
             ##q = self.pdec.pcontext.pmove_prediction[pm_idn][self.idn].ne_additions
-            self.default_NE_addition_operation(q[0],q[1])
+            self.default_NE_addition_operation(q0,q1)
             return
         elif mmove.move_type == "MInfo#2":
             q = deepcopy(mmove.move_data[0])
@@ -1471,7 +1472,7 @@ class Player:
             self.rg.delete_node(n)
             self.excess += v
 
-        
+        self.rg.clean_graph()
         return
 
     #############################################################
