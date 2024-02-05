@@ -1,6 +1,6 @@
 from farse_mach import * 
 
-class ZugDeinLichtMach:
+class ZugdeinlichtMach:
 
     def __init__(self):
         return 
