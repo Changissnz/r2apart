@@ -96,7 +96,7 @@ class FARSEWriter:
         self.make_dir(overwrite)
         self.declare_bookmark_file()
         q = self.folder_path + "/" + self.fp2
-        self.vfile = open(q,"w")
+        self.vfile = open(q,"w",newline="")
         self.vfile_writer = csv.writer(self.vfile,delimiter=",")
         return
 
@@ -183,7 +183,82 @@ class FARSEReader:
 
     def __init__(self,folder_path,fp1,fp2):
         self.folder_path = folder_path
+        assert "." not in fp1
         # filename prefix for PContext
         self.fp1 = fp1
+
         # filename for vectorized form of PContext 
         self.fp2 = fp2
+        assert os.path.exists(self.folder_path)
+
+        # bookmark file 
+        self.d = None 
+        self.num_contexts = None
+        self.preprocess()
+
+    def preprocess(self):
+        self.count_number_of_contexts()
+        self.load_bookmark_file()
+
+    """
+    list of vector samples, corresponding list of <PContext> samples. 
+    """
+    def fetch_by_key(self,k:int):
+        v = self.d[k]
+        q = self.folder_path + "/" + self.fp1 + "-" + str(k)
+        xs0,xs1 = None,None
+        if os.path.isfile(q):
+            f = open(q,"rb")
+            xs1 = pickle.load(f)
+            xs0 = self.fetch_vector_samples(v) 
+            return xs0,xs1 
+        else:
+            print("[!] NOT A FILE [!!]")
+        return None
+
+    def fetch_vector_samples(self,vector_idns):
+        vector_idns = sorted(vector_idns)
+        fx = open(self.folder_path + "/" + self.fp2,"r")
+        samples = {} 
+        for line in fx:
+            if len(vector_idns) == 0:
+                break 
+
+            x = line.split(",")
+            assert len(x) > 0
+            if int(x[0]) in vector_idns:
+                q = x[1:]
+                q = [float(q_) for q_ in q]
+                samples[int(x[0])] = q
+                vector_idns.remove(int(x[0]))
+        fx.close() 
+        return samples 
+
+    """
+    """
+    def count_number_of_contexts(self):
+        folder_elements = os.listdir(self.folder_path)
+        contexts = 0
+        for f in folder_elements:
+            stat = os.path.isfile(self.folder_path + "/" + f) 
+            if stat:
+                q = f.split("-")
+                if q[0] == self.fp1:
+                    contexts += 1
+        self.num_contexts = contexts 
+        return contexts
+
+    def load_bookmark_file(self):
+        q = self.folder_path + "/" + "bookmark.md"
+        assert os.path.isfile(q)
+        self.d = defaultdict(list)
+        with open(q,"r") as fx:
+            filelines = fx.readlines() 
+            for fx in filelines:
+                fx_ = fx.rstrip()
+                qx = fx_.split(",")
+                q0 = qx[0]
+                q1 = qx[1].split("-")
+                q1 = [int(q1_) for q1_ in q1]
+                self.d[int(q0)] = q1
+        return
