@@ -78,5 +78,13 @@ first 5 timestamps to under 2 minutes.
 - The `FARSE` training algorithm is well 
 underway in construction.
 
+# Update: 2/5/2024 
+
+- Finalized design plans for project. Project has
+not yet implemented `MMove #3` (make new move). 
+Perhaps `MMove #3` will not be implemented.
+- Start work using `class<BallComp>` from library 
+`morebs2`. 
+
 # License?
 Copyright 2023 Richard Pham.
