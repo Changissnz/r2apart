@@ -133,7 +133,7 @@ class FARSE:
             q = self.tme.idn_to_index(idn)
             assert q != -1
             self.training_player = (q,idn)
-            self.training_player_active = (True,False) 
+            self.training_player_active = (True,False)
 
       def fetch_training_player(self):
             assert type(self.training_player) != type(None)
@@ -162,6 +162,10 @@ class FARSE:
                   self.mark_training_player(self.training_player[1])
             except:
                   print("training player has been terminated.")
+                  return
+            
+            # case: hop cycle has been finished
+
             print("setting timestamp to TMEnv: {}".format(self.tme.fi.ct))
             self.timestamp_counter = self.tme.fi.ct
             print("remaining candidates: {}".format(len(self.hopsearch_cache)))
@@ -195,7 +199,7 @@ class FARSE:
             self.tme_pre = deepcopy(self.tme)
 
             # move each player initially
-            print("initial analysis & move")
+            print("move one cycle")
             self.cycle_timestamp(False)
             
             # TODO: register info here
@@ -272,21 +276,18 @@ class FARSE:
                         self.timestamp_counter,hp,None,deepcopy(self.ths))
                   return 
 
+            # case: one timestamp hop sequence has been processed,
+            #       reset `ths` and 
+            if len(self.tme.fi.th) == 0:
+                  self.tme.fi.th = deepcopy(self.ths)
+                  self.tme.fi.pcontext_seq.clear()
+
             # case: FARSE already started running 
             self.tme.fi.ct = self.timestamp_counter + 1
             self.tme.fi.pmi = self.tme_pre.idn
 
             print("loading TMEnv with info")
             print(str(self.tme.fi))
-
-
-            """
-            index = 0 if type(self.context_move_index[0]) == type(None) else \
-                  self.context_move_index[0]
-            p.pdec.pcontext.set_selection_descriptor(index)
-            self.tme.fi.pcontext_seq.append(deepcopy(p.pcontext))
-            """
-
             return
 
       def set_TMEnv_idn(self):

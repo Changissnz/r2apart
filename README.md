@@ -84,7 +84,14 @@ underway in construction.
 not yet implemented `MMove #3` (make new move). 
 Perhaps `MMove #3` will not be implemented.
 - Start work using `class<BallComp>` from library 
-`morebs2`. 
+`morebs2`.
+
+# Update: 2/6/2024
+
+- `MMove #3` will not be implemented due to 
+computational shortcomings on standard computing 
+devices that have resulted in slow runtimes for 
+the player move chain as it already is.
 
 # License?
 Copyright 2023 Richard Pham.
