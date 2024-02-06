@@ -265,7 +265,24 @@ based on the differences between expected and actual scores of `PMove` execution
 
 # The Player Move-Chain
 
-TODO 
+Player gauges each possible move by the 
+following order of categories: 
+- `PMove`  
+- `AMove`
+- `MMove`
+- `NMove`
+
+For each possible move of category `X`, the 
+player generates an `XInfo` instance that 
+numerically captures the forecasted effects of
+that move based on the knowledge that player 
+has at that time of forecasting, held in its
+`PDEC` structure. Then the player uses the 
+standard deciding function `F` to rank the 
+possible moves by the numerical values 
+collected. Lastly, the player chooses the 
+move with the highest score calculated by 
+`F`.
 
 # Miscellaneous features
 - `move-type deteterministic`
