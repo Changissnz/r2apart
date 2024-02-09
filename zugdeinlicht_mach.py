@@ -1,12 +1,5 @@
 from farse_mach import * 
-
-class WeightFitter:
-
-    def __init__(self):
-        return
-
-    def fit_context(self):
-        return -1
+from spec_ballcomp import *
 
 """
 Algorithm that uses stochastic ordering of points to 
