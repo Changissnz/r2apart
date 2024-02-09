@@ -107,6 +107,8 @@ class FARSE:
 
             # TMEnv idn, hop
             self.cache_target = [None,None]
+
+            self.best_decision_count = 0 
             return
 
       def preprocess(self,training_player_idn):
@@ -362,6 +364,8 @@ class FARSE:
             tme2 = deepcopy(tme)
             tme2.fi.th = tme2.fi.th[1:]
             self.hopsearch_cache.append(tme2)
+            self.best_decision_count += 1
+
 
             # for the remaining solutions, add them back to hopsearch_cache
             for x in self.dec_cache:

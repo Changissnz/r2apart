@@ -227,8 +227,6 @@ class TMEnv:
         # rank the moves by context-mapper
         sdf = self.players[p_index].pdec.context_mapper.sdf
         self.players[p_index].pdec.pcontext.std_dec_func_proc(sdf,self.verbose)
-
-
         return
 
     def all_pmove_AND_player_combos(self,p_index:int):

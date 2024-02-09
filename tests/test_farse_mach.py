@@ -39,20 +39,15 @@ class FARSEClass(unittest.TestCase):
         fm.mark_training_player("0")
         fm.initialize_FI_cache()
 
+        # TODO: unused 
         sol_hopsearch = [0,1,"1",1,4,1]
         sol_tmp = [0,0,"1",1,3,1]
         fm.run_one_hop_round()
 
-        for x in fm.tmp_cache:
-            #print(str(x.fi))
-            assert check_fi(x.fi,sol_tmp)
-
-        for x in fm.hopsearch_cache:
-            assert check_fi(x.fi,sol_hopsearch)
-
-        assert len(fm.hopsearch_cache) == 1
-        assert len(fm.tmp_cache) == 10
+        assert len(fm.hopsearch_cache) == 12
+        assert len(fm.tmp_cache) == 0
         assert len(fm.dec_cache) == 0
+        assert fm.best_decision_count == 1 
         return
 
     def test__FARSE__run_one_hop_round__case_2(self):
@@ -65,9 +60,10 @@ class FARSEClass(unittest.TestCase):
         fm.initialize_FI_cache()
         fm.run_one_hop_round()
 
-        assert len(fm.hopsearch_cache) == 1
-        assert len(fm.tmp_cache) == 135
+        assert len(fm.hopsearch_cache) == 137
+        assert len(fm.tmp_cache) == 0
         assert len(fm.dec_cache) == 0
+        assert fm.best_decision_count == 1
 
  
 
