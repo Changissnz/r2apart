@@ -22,7 +22,7 @@ class ZugdeinlichtMach:
             random.seed(rdm_seed)
         self.target_folder = None
         self.tf_file_ordering = None
-        self.farse_reader = None 
+        self.farse_reader = None
         return 
         
     def set_target_folder(self):

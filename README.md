@@ -93,5 +93,10 @@ computational shortcomings on standard computing
 devices that have resulted in slow runtimes for 
 the player move chain as it already is.
 
+# Update: 2/18/2024
+
+- Taking a < 1 month break from this project. 
+  Further developments stalled until after break. 
+
 # License?
 Copyright 2023 Richard Pham.
