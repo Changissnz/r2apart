@@ -298,6 +298,37 @@ class PContext:
             r.append(q.std_condense())
         return r
 
+    def selection_to_sample_vectors(self,opt_arg=""):
+        assert type(self.selection_descriptor) != type(None)
+
+        q = self.selection_descriptor.split("-")[0]
+        print("SELECTION DESCRIPTOR: ", self.selection_descriptor)
+        if "PInfo" in q:
+            assert opt_arg != ""
+            fpd = self.format_PMove_data()
+            x = [fpd[opt_arg]]
+            for (k,v) in fpd.items():
+                if k == opt_arg: continue
+                x.append(v) 
+            return x
+        elif "AInfo" in q:
+            fpd = self.format_AMove_data()
+            if "#1" in fpd:
+                return [fpd[0]]
+            return [fpd[1]]
+        elif "MInfo" in q:
+            fpd = self.format_MMove_data()
+            if "#1" in fpd:
+                return [fpd[0]]
+            return [fpd[1]]
+        elif "NInfo" in q:
+            fpd = self.format_NMove_data()
+            elem = fpd.pop(int(opt_arg))
+            fpd.insert(0,elem)
+            return fpd
+        else:
+            assert False
+
     ##################### update methods
 
     # TODO: write separate code for private vs. public context regarding
