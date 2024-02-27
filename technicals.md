@@ -284,6 +284,35 @@ collected. Lastly, the player chooses the
 move with the highest score calculated by 
 `F`.
 
+# The Learning Process
+- data collection phase
+The structure `FARSE` takes one `TMEnv` instance. User 
+inputs the target player in the `TMEnv` for `FARSE` to 
+record its information for training. Until the player 
+wins (by being the only surviving player in the `TMEnv`) 
+or is terminated, `FARSE` uses a branching decision 
+structure (similar to a decision tree that grows larger 
+with every timestamp) to determine the best sequences of
+moves conducted by the player at every hop sequence junction.
+Relevant information in the form of the 24-vector (variable 
+values collected from a `PContext` instance of the player) 
+and the `PContext` at best-decision junction points is  
+collected into a folder. 
+- learning phase 
+The structure `ZugdeinlichtMach` takes as input a sequence 
+of folder information, each pertaining to the information 
+collected from a `FARSE` training instance.  
+
+`ZugdeinlichtMach` then uses a modified form of the `BallComp`
+unsupervised machine-learning structure (in the library `morebs2`)
+to classify the 24-vecs so that a `BallComp` classifier solution 
+is constructed. `ZugdeinlichtMach` then iterates back through 
+the 24-vecs and collects frequency labels for  
+`ball identifier -> XMove class for the 24-vec`.
+`ZugdeinlichtMach` goes back and iterates through each (24-vec, `PContext`)
+pair and calculates the sequence of weights for the `PDEC` structure to 
+use so that the wanted decision from `PContext` is used. 
+
 # Miscellaneous features
 - `move-type deteterministic`
 description:  

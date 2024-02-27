@@ -300,9 +300,7 @@ class PContext:
 
     def selection_to_sample_vectors(self,opt_arg=""):
         assert type(self.selection_descriptor) != type(None)
-
         q = self.selection_descriptor.split("-")[0]
-        print("SELECTION DESCRIPTOR: ", self.selection_descriptor)
         if "PInfo" in q:
             assert opt_arg != ""
             fpd = self.format_PMove_data()

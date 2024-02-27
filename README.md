@@ -98,5 +98,22 @@ the player move chain as it already is.
 - Taking a < 1 month break from this project. 
   Further developments stalled until after break. 
 
+# Update: 2/27/2024
+
+- Development has slowed to a snail's crawl. The 
+file `farse_mach_samples` has code for two `class<FarseMach>` instances. 
+Please see the file `technicals.md` for the data collection and 
+training procedure. 
+- Many sub-optimal parts in this program, with possible bugs present 
+in the program. 
+
+## ATTENTION 
+Public developments for this project are terminated due to lack of 
+  time and resources on the developer's part (that would be me). 
+The specific parameters involved in this automaton demand very 
+specific code, and the runtime as well as commercial costs involved 
+in `r2apart` have encouraged me to cease all developments for it made 
+public. 
+
 # License?
 Copyright 2023 Richard Pham.

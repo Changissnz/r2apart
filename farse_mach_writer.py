@@ -153,11 +153,6 @@ class FARSEWriter:
         self.write_to_bookmark(fi_idn,idns)    
 
         # write out vectorized forms
-        """
-        print("writing vecs")
-        print(vecs)
-        print()
-        """
         for v in vecs:
             self.vfile_writer.writerow(v)
         self.flush_data()

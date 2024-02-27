@@ -1,8 +1,7 @@
 # file contains classes used for tests
 from farse_mach import *
 
-def TMEnv_sample_1(verbose_mode=False):
-    i = 81#4
+def TMEnv_sample_1(verbose_mode=False,i=81):
     num_players = 3
     num_moves_range = (4,7)
     drange = (16,30)

@@ -6,7 +6,6 @@ from spec_ballcomp import *
 
 def default_ballcomp_radius(minimum,maximum,num_balls,ratio_of_max):
     diff = maximum - minimum
-    print("DIFF: ",diff)
     max_radius = max(diff) / (num_balls * 2)
     return max_radius * ratio_of_max 
 
